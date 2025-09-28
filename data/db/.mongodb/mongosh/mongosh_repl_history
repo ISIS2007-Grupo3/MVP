@@ -1,0 +1,3 @@
+exit
+db.createCollection("1212")
+db

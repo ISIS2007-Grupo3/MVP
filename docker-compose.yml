@@ -2,17 +2,31 @@ services:
   mongo:
     image: mongo:latest
     container_name: mongo
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
     ports:
       - "27017:27017"
     volumes:
       - ./data/db:/data/db
 
   fastapi:
-    build: .
+    build: ./whatsapp-api
     container_name: fastapi
     ports:
       - "8000:8000"
     volumes:
-      - .:/app
+      - ./whatsapp-api:/app
     depends_on:
       - mongo
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: ngrok
+    command: ["http", "fastapi:8000", "--log", "stdout", "--log-format", "logfmt"]
+    ports:
+      - "4040:4040"
+    depends_on:
+      - fastapi
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN}

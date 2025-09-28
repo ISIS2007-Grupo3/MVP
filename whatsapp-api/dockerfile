@@ -1,0 +1,14 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copiamos 
+COPY . .
+
+EXPOSE 8000
+
+# Ejecutamos con fastapi run
+CMD ["fastapi", "dev", "main.py", "--host", "0.0.0.0", "--port", "8000"]
