@@ -1,3 +1,1 @@
-exit
-db.createCollection("1212")
-db
+db.createUser({ user: "admin", pwd: "password", roles: [{ role: 'root', db: "admin" }] })

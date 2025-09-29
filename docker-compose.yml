@@ -5,25 +5,30 @@ services:
     environment:
       - MONGO_INITDB_ROOT_USERNAME=admin
       - MONGO_INITDB_ROOT_PASSWORD=password
+      - MONGO_INITDB_DATABASE=mvp
     ports:
-      - "27017:27017"
+      - "27000:27017"
     volumes:
       - ./data/db:/data/db
 
   fastapi:
-    build: ./whatsapp-api
+    build: ./app
     container_name: fastapi
     ports:
       - "8000:8000"
     volumes:
-      - ./whatsapp-api:/app
+      - ./app:/app
+    environment:
+      - MONGO_URL=${MONGO_URL}
+      - PHONE_NUMBER_ID=${PHONE_NUMBER_ID}
+      - WHATSAPP_TOKEN=${WHATSAPP_TOKEN}
     depends_on:
       - mongo
 
   ngrok:
     image: ngrok/ngrok:latest
     container_name: ngrok
-    command: ["http", "fastapi:8000", "--log", "stdout", "--log-format", "logfmt"]
+    command: [ "http", "fastapi:8000", "--log", "stdout", "--log-format", "logfmt" ]
     ports:
       - "4040:4040"
     depends_on:
