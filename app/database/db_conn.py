@@ -1,5 +1,5 @@
 from pymongo import MongoClient
-from app.repositories.repositories import UserRepository
+from app.repositories.user_repositories import UserRepository
 import os
 
 def get_db():

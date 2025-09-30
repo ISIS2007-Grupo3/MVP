@@ -22,13 +22,14 @@ services:
       - MONGO_URL=${MONGO_URL}
       - PHONE_NUMBER_ID=${PHONE_NUMBER_ID}
       - WHATSAPP_TOKEN=${WHATSAPP_TOKEN}
+      - COHERE_API_KEY=${COHERE_API_KEY}
     depends_on:
       - mongo
 
   ngrok:
     image: ngrok/ngrok:latest
     container_name: ngrok
-    command: [ "http", "fastapi:8000", "--log", "stdout", "--log-format", "logfmt" ]
+    command: [ "http", "fastapi:8000", "--log", "stdout", "--log-format", "logfmt", "--domain=${NGROK_DOMAIN}" ]
     ports:
       - "4040:4040"
     depends_on:
