@@ -3,6 +3,8 @@ from fastapi import APIRouter, Request
 from fastapi.responses import PlainTextResponse
 from requests import request as http_request
 from app.models.whatsapp_webhook import WebhookPayload
+from app.logic.send_message import send_message
+from app.logic.whatsapp import handle_message
 
 VERIFY_TOKEN = "ClaveSuperSecreta123NoNosRoben"  
 PHONE_NUMBER_ID = os.getenv("PHONE_NUMBER_ID")
@@ -26,24 +28,30 @@ async def verify_webhook(request: Request):
 @router.post("/")
 async def obtener_mensaje(payload: WebhookPayload):
     print("LLEGÓ UN MENSAJE NUEVO")
-    mensaje = payload.get_mensaje()  
-    print(mensaje)
-    to = mensaje.from_
-    data = {
-        "messaging_product": "whatsapp",
-        "to": to,
-        "type": "text",
-        "text": {
-            "body": mensaje.__str__()
-        }
-    }
-    url = f"https://graph.facebook.com/v20.0/{PHONE_NUMBER_ID}/messages"
+    handle_message(payload, PHONE_NUMBER_ID)
+    # mensaje = payload.get_mensaje()  
+    # print(mensaje)
+    # if mensaje:
+    #     to = mensaje.from_
+    #     print(mensaje.text.body)
+    #     send_message(to, "holii", PHONE_NUMBER_ID)
+    # data = {
+    #     "messaging_product": "whatsapp",
+    #     "to": to,
+    #     "type": "text",
+    #     "text": {
+    #         "body": mensaje.__str__()
+    #     }
+    # }
+    # url = f"https://graph.facebook.com/v20.0/{PHONE_NUMBER_ID}/messages"
 
-    headers = {
-        "Authorization": f"Bearer {WHATSAPP_TOKEN}",
-        "Content-Type": "application/json"
-    }
-    resp = http_request("POST", url, headers=headers, json=data)
-    print("📤 Respuesta de Meta:", resp.status_code, resp.text)
+    # headers = {
+    #     "Authorization": f"Bearer {WHATSAPP_TOKEN}",
+    #     "Content-Type": "application/json"
+    # }
+    # resp = http_request("POST", url, headers=headers, json=data)
+    # print("📤 Respuesta de Meta:", resp.status_code, resp.text)
+    
+    
 
     return {"status": "received"}
