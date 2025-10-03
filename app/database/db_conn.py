@@ -2,15 +2,14 @@ from pymongo import MongoClient
 from app.repositories.user_repositories import UserRepository
 import os
 
+MONGO_URL = os.getenv("MONGO_URL")
+
+client = MongoClient(MONGO_URL)
+db = client["mvp"]
+
 def get_db():
-    url = os.getenv("MONGO_URL")
-    client = MongoClient(url)
-    try:    
-        db = client["mvp"]
-        comprobar_collections(db)
-        yield db
-    finally:
-        client.close()
+    comprobar_collections(db)
+    return db
 
 def comprobar_collections(db):
     if "mensajes" not in db.list_collection_names():

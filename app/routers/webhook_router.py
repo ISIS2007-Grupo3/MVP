@@ -1,10 +1,12 @@
 import os
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import PlainTextResponse
 from requests import request as http_request
+from app.database.db_conn import get_db
 from app.models.whatsapp_webhook import WebhookPayload
 from app.logic.send_message import send_message
 from app.logic.whatsapp import handle_message
+from app.repositories.message_repository import MessageRepository
 
 VERIFY_TOKEN = "ClaveSuperSecreta123NoNosRoben"  
 PHONE_NUMBER_ID = os.getenv("PHONE_NUMBER_ID")
@@ -26,9 +28,14 @@ async def verify_webhook(request: Request):
 
 
 @router.post("/")
-async def obtener_mensaje(payload: WebhookPayload):
+async def obtener_mensaje(payload: WebhookPayload, db= Depends(get_db)):
     print("LLEGÓ UN MENSAJE NUEVO")
-    handle_message(payload, PHONE_NUMBER_ID)
+    message_repo = MessageRepository(db)
+    msg = payload.get_mensaje()
+    if msg and msg.text:
+        message_repo.crear_mensaje(msg.model_dump())
+    handle_message(payload, db)
+    
     # mensaje = payload.get_mensaje()  
     # print(mensaje)
     # if mensaje:
