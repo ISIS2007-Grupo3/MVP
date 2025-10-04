@@ -30,12 +30,12 @@ async def verify_webhook(request: Request):
 @router.post("/")
 async def obtener_mensaje(payload: WebhookPayload, db= Depends(get_db)):
     print("LLEGÓ UN MENSAJE NUEVO")
+    print(payload)
     message_repo = MessageRepository(db)
     msg = payload.get_mensaje()
     if msg and msg.text:
         message_repo.crear_mensaje(msg.model_dump())
-    handle_message(payload, db)
-    
+        handle_message(payload, db)    
     # mensaje = payload.get_mensaje()  
     # print(mensaje)
     # if mensaje:
