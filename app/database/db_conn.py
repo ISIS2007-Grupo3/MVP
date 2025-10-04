@@ -12,13 +12,16 @@ def get_db():
     return db
 
 def comprobar_collections(db):
-    if "mensajes" not in db.list_collection_names():
+    colecciones = db.list_collection_names()
+    if "mensajes" not in colecciones:
         db.create_collection("mensajes")
-    if "usuarios" not in db.list_collection_names():
+    if "usuarios" not in colecciones:
         db.create_collection("usuarios")
-    if "conversaciones" not in db.list_collection_names():
+    if "conversaciones" not in colecciones:
         db.create_collection("conversaciones")
-    
+    if "parqueaderos" not in colecciones:
+        db.create_collection("parqueaderos")
+
 def get_usuario(db, wa_id: str):
     user_repo = UserRepository(db)
     return user_repo.find_by_id(wa_id)

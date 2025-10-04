@@ -1,6 +1,7 @@
 from app.models.whatsapp_webhook import WebhookPayload
 from app.logic.send_message import send_message
 from app.models.whatsapp_webhook import Message
+from app.logic.parqueaderos import obtener_parqueaderos_con_cupos
 import app.logic.sesion as sesion
 
 def handle_message(payload: WebhookPayload, db):
@@ -136,7 +137,14 @@ def handle_ver_parqueaderos(user_id, db):
     """
     send_message(user_id, "🅿️ Consultando parqueaderos disponibles...")
     # Aquí iría la logica para consultar parqueaderos
-    send_message(user_id, "❌ No hay parqueaderos disponibles en este momento.")
+    parqueaderos = obtener_parqueaderos_con_cupos(db)
+    if parqueaderos:
+        mensaje = "*Parqueaderos con cupos disponibles:*\n"
+        for p in parqueaderos:
+            mensaje += f"- *{p.name}* \n  Ubicación: {p.ubicacion} \n  Capacidad: {p.capacidad} \n  Ultima actualización: {p.ultima_actualizacion} \n\n"
+        send_message(user_id, mensaje)
+    else:
+        send_message(user_id, "No hay parqueaderos con cupos disponibles en este momento.")
     mostrar_menu_conductor(user_id, db)
 
 def handle_suscripcion_notificaciones(user_id, db):
