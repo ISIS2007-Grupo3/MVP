@@ -57,3 +57,45 @@ def formatear_tiempo_para_usuario(timestamp: str) -> str:
         return dt.strftime("%d/%m/%Y %H:%M")
     except (ValueError, TypeError):
         return timestamp or "N/A"
+
+def tiempo_relativo(timestamp: str) -> str:
+    """
+    Convierte un timestamp en texto relativo (hace cuánto tiempo)
+    Args:
+        timestamp (str): Timestamp en formato "YYYY-MM-DD HH:MM:SS"
+    Returns:
+        str: Tiempo relativo (ej: "Hace 5 min", "Hace 2 horas")
+    """
+    try:
+        zona_bogota = pytz.timezone('America/Bogota')
+        
+        # Parsear el timestamp y asignar zona horaria de Bogotá
+        dt = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")
+        dt = zona_bogota.localize(dt)
+        
+        # Obtener tiempo actual en Bogotá
+        ahora = datetime.now(zona_bogota)
+        
+        # Calcular diferencia
+        diferencia = ahora - dt
+        
+        # Convertir a formato legible
+        segundos = int(diferencia.total_seconds())
+        
+        if segundos < 60:
+            return "Hace unos segundos"
+        elif segundos < 3600:  # Menos de 1 hora
+            minutos = segundos // 60
+            return f"Hace {minutos} min"
+        elif segundos < 86400:  # Menos de 1 día
+            horas = segundos // 3600
+            return f"Hace {horas}h"
+        elif segundos < 604800:  # Menos de 1 semana
+            dias = segundos // 86400
+            return f"Hace {dias}d"
+        else:
+            # Más de 1 semana, mostrar fecha
+            return dt.strftime("%d/%m/%Y")
+            
+    except (ValueError, TypeError):
+        return "Desconocido"

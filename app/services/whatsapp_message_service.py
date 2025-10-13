@@ -39,32 +39,43 @@ class WhatsAppMessageService:
         success = self.interactive_service.send_conductor_menu(user_id)
         if not success:
             # Fallback al mensaje de texto tradicional
-            menu = """🚗 Menú Conductor:
-Selecciona una de las siguientes opciones:
+            menu = """🚗 *Menú Conductor*
 
-1️⃣ Ver parqueaderos disponibles
-2️⃣ Suscribirse a notificaciones
+Bienvenido al sistema de parqueaderos. Escribe el número de tu opción:
+
+1️⃣ Ver Parqueaderos
+   📍 Consulta parqueaderos con cupos disponibles
+
+2️⃣ Notificaciones  
+   🔔 Gestiona tus suscripciones de alertas
+
 3️⃣ Salir
-
-Escribe el número de la opción que deseas:"""
+   👋 Cerrar sesión del sistema"""
             send_message(user_id, menu)
     
     def mostrar_menu_suscripciones(self, user_id: str):
         """Muestra el menú de opciones de suscripción usando mensajes interactivos"""
-        success = self.interactive_service.send_suscripciones_menu(user_id)
+        success = self.interactive_service.send_subscription_menu(user_id)
         if not success:
             # Fallback al mensaje de texto tradicional
             menu = """🔔 *Notificaciones de Parqueaderos*
 
-Selecciona una opción:
+Gestiona tus suscripciones de notificaciones. Escribe el número de tu opción:
 
-1️⃣ Suscribirme a todos los parqueaderos
-2️⃣ Ver parqueaderos para suscripción específica
-3️⃣ Ver mis suscripciones actuales
-4️⃣ Desuscribirme de todas las notificaciones
-5️⃣ Volver al menú principal
+1️⃣ Todos los parqueaderos
+   🌐 Recibe notificaciones de todos
 
-Escribe el número de tu opción:"""
+2️⃣ Parqueadero específico
+   🅿️ Elige un parqueadero particular
+
+3️⃣ Ver mis suscripciones
+   📋 Revisa tus suscripciones actuales
+
+4️⃣ Desuscribir todo
+   ❌ Cancelar todas las notificaciones
+
+5️⃣ Volver al menú
+   ⬅️ Regresar al menú principal"""
             send_message(user_id, menu)
     
     def mostrar_menu_gestor(self, user_id: str):
@@ -72,20 +83,30 @@ Escribe el número de tu opción:"""
         success = self.interactive_service.send_gestor_menu(user_id)
         if not success:
             # Fallback al mensaje de texto tradicional
-            menu = """🏢 Menú Gestor de Parqueadero:
-Selecciona una de las siguientes opciones:
+            menu = """🏢 *Menú Gestor de Parqueadero*
 
-1️⃣ Ver información de mi parqueadero
-2️⃣ Actualizar cupos disponibles
+Panel de administración. Escribe el número de tu opción:
+
+1️⃣ Ver Información
+   ℹ️ Consulta el estado de tu parqueadero
+
+2️⃣ Actualizar Cupos
+   📝 Modifica la disponibilidad de espacios
+
 3️⃣ Salir
-
-Escribe el número de la opción que deseas:"""
+   👋 Cerrar sesión del sistema"""
             send_message(user_id, menu)
     
     # ===== MENSAJES DE PARQUEADEROS =====
     
+    def mostrar_parqueaderos_interactivos(self, user_id: str, parqueaderos: List, pagina: int = 1) -> bool:
+        """Muestra lista interactiva de parqueaderos con opción de ver detalles y paginación"""
+        if not parqueaderos:
+            return False
+        return self.interactive_service.send_parqueaderos_con_detalles(user_id, parqueaderos, pagina)
+    
     def mostrar_parqueaderos_disponibles(self, user_id: str, parqueaderos: List):
-        """Muestra lista de parqueaderos con cupos disponibles"""
+        """Muestra lista de parqueaderos con cupos disponibles (fallback texto)"""
         if parqueaderos:
             mensaje = "*Parqueaderos con cupos disponibles:*\n\n"
             for p in parqueaderos:
@@ -101,6 +122,29 @@ Escribe el número de la opción que deseas:"""
             send_message(user_id, mensaje)
         else:
             send_message(user_id, "No hay parqueaderos con cupos disponibles en este momento.")
+    
+    def mostrar_detalle_parqueadero(self, user_id: str, parqueadero):
+        """Muestra información detallada de un parqueadero específico"""
+        info_cupos = parqueadero.rango_cupos or f"~{parqueadero.cupos_libres} cupos"
+        estado = parqueadero.estado_ocupacion or "Cupos disponibles"
+        
+        mensaje = f"""🅿️ *{parqueadero.name}*
+
+📍 *Ubicación:*
+{parqueadero.ubicacion}
+
+📊 *Estado Actual:*
+{estado}
+
+🚗 *Disponibilidad:*
+{info_cupos}
+
+🕐 *Última Actualización:*
+{formatear_tiempo_para_usuario(parqueadero.ultima_actualizacion)}
+
+💡 *Tip:* Puedes suscribirte a este parqueadero para recibir notificaciones cuando haya cupos disponibles."""
+        
+        send_message(user_id, mensaje)
     
     def mostrar_parqueaderos_para_suscripcion(self, user_id: str, parqueaderos: List):
         """Muestra parqueaderos disponibles para suscripción usando mensajes interactivos"""
@@ -146,15 +190,23 @@ Escribe el número de la opción que deseas:"""
     
     def confirmar_desuscripcion_total(self, user_id: str):
         """Confirma desuscripción de todas las notificaciones"""
-        send_message(user_id, "❌ Te has desuscrito de todas las notificaciones")
+        send_message(user_id, "✅ Te has desuscrito de todas las notificaciones correctamente.")
     
     def confirmar_desuscripcion_especifica(self, user_id: str, nombre_parqueadero: str):
         """Confirma desuscripción de un parqueadero específico"""
         send_message(user_id, f"❌ Te has desuscrito del parqueadero: *{nombre_parqueadero}*")
     
-    def mostrar_suscripciones_actuales(self, user_id: str, suscripciones: List):
-        """Muestra las suscripciones actuales del conductor"""
+    def mostrar_suscripciones_actuales(self, user_id: str, suscripciones: List) -> bool:
+        """Muestra las suscripciones actuales del conductor con menú interactivo"""
+        print(f"🔍 mostrar_suscripciones_actuales: {len(suscripciones) if suscripciones else 0} suscripciones")
         if suscripciones:
+            # Intentar mostrar menú interactivo
+            success = self.interactive_service.send_subscriptions_list_with_unsubscribe(user_id, suscripciones)
+            print(f"📊 Resultado del servicio interactivo: {success}")
+            if success:
+                return True
+            
+            # Fallback a mensaje de texto
             mensaje = "*Tus suscripciones actuales:*\n\n"
             for i, suscripcion in enumerate(suscripciones, 1):
                 if suscripcion["tipo"] == "global":
@@ -163,11 +215,12 @@ Escribe el número de la opción que deseas:"""
                     mensaje += f"{i}️⃣ 🅿️ {suscripcion['parqueadero']}\n"
                 mensaje += f"   📅 Desde: {formatear_tiempo_para_usuario(suscripcion['fecha'])}\n\n"
             
-            mensaje += "Para desuscribirte, escribe 'desuscribir' seguido del número o 'desuscribir todo'"
+            mensaje += "Para desuscribirte, usa el menú de notificaciones ➡️ Opción ❌ Desuscribirme"
         else:
             mensaje = "❌ No tienes suscripciones activas"
         
         send_message(user_id, mensaje)
+        return False
     
     # ===== NOTIFICACIONES =====
     
@@ -196,31 +249,39 @@ Para desuscribirte, escribe "desuscribir" """
     
     def error_opcion_invalida_menu_principal(self, user_id: str):
         """Error cuando selecciona opción inválida en menú principal"""
-        send_message(user_id, "❌ Opción inválida. Por favor, selecciona 1, 2 o 3.")
+        send_message(user_id, "❌ Opción no reconocida. Por favor, selecciona una opción del menú:")
     
     def error_opcion_invalida_suscripciones(self, user_id: str):
         """Error cuando selecciona opción inválida en menú de suscripciones"""
-        send_message(user_id, "❌ Opción inválida. Por favor, selecciona 1, 2, 3, 4 o 5.")
+        send_message(user_id, "❌ Opción no válida. Por favor, selecciona del menú de suscripciones:")
     
     def error_numero_invalido(self, user_id: str):
         """Error cuando envía un número inválido"""
-        send_message(user_id, "❌ Por favor, envía un número válido")
+        send_message(user_id, "❌ Número no válido. Por favor, selecciona una opción del menú:")
     
     def error_parqueadero_no_encontrado(self, user_id: str):
         """Error cuando no se encuentra el parqueadero"""
-        send_message(user_id, "❌ Parqueadero no encontrado")
+        send_message(user_id, "❌ Parqueadero no encontrado. Intenta de nuevo:")
     
     def error_sin_suscripciones(self, user_id: str):
         """Error cuando no tiene suscripciones activas"""
-        send_message(user_id, "❌ No tienes suscripciones activas")
+        send_message(user_id, "ℹ️ No tienes suscripciones activas en este momento.")
     
     def error_suscripcion_general(self, user_id: str, mensaje_error: str):
         """Error general en suscripciones"""
         send_message(user_id, f"❌ Error: {mensaje_error}")
     
+    def confirmar_desuscripcion_total(self, user_id: str):
+        """Confirma desuscripción de todas las notificaciones"""
+        send_message(user_id, "✅ Te has desuscrito de todas las notificaciones correctamente")
+    
+    def confirmar_desuscripcion_parqueadero(self, user_id: str, nombre_parqueadero: str):
+        """Confirma desuscripción de un parqueadero específico"""
+        send_message(user_id, f"✅ Te has desuscrito de '{nombre_parqueadero}' correctamente")
+    
     def error_rol_no_reconocido(self, user_id: str):
         """Error cuando el rol del usuario no es reconocido"""
-        send_message(user_id, "Rol no reconocido. Contacta soporte.")
+        send_message(user_id, "❌ Rol no reconocido. Por favor contacta al soporte técnico.")
     
     # ===== MENSAJES DE ACTUALIZACIÓN DE CUPOS =====
     
@@ -231,18 +292,27 @@ Para desuscribirte, escribe "desuscribir" """
             # Fallback al mensaje de texto tradicional
             mensaje = """📝 *Actualizar Estado del Parqueadero*
 
-Selecciona la opción que mejor describe la situación actual:
+Selecciona el estado actual. Escribe el número de tu opción:
 
-🔴 *1* - Parqueadero lleno (0 cupos)
-🟡 *2* - Pocos cupos disponibles (1-5 cupos)  
-🟢 *3* - Algunos cupos disponibles (6-15 cupos)
-🟢 *4* - Muchos cupos disponibles (16-30 cupos)
-🔵 *5* - Parqueadero casi vacío (30+ cupos)
-⬅️ *6* - Volver al menú principal
+🔴 *1* - Parqueadero lleno
+   • 0 cupos disponibles
 
-💡 *Los conductores recibirán notificación si hay cupos disponibles (opciones 2-5)*
+🟡 *2* - Pocos cupos
+   • 1-5 cupos disponibles
 
-Escribe el número de tu opción:"""
+🟢 *3* - Algunos cupos
+   • 6-15 cupos disponibles
+
+🟢 *4* - Muchos cupos
+   • 16-30 cupos disponibles
+
+🔵 *5* - Casi vacío
+   • 30+ cupos disponibles
+
+⬅️ *6* - Volver al menú
+   • Cancelar y regresar
+
+💡 *Las opciones 2-5 notificarán a conductores suscritos*"""
             send_message(user_id, mensaje)
     
     def confirmar_actualizacion_cupos(self, user_id: str, cupos_libres: str, notificaciones_enviadas: int):
@@ -277,7 +347,7 @@ Escribe el número de tu opción:"""
     
     def error_formato_cupos(self, user_id: str):
         """Error en formato de actualización de cupos"""
-        send_message(user_id, "❌ Opción inválida. Por favor, selecciona una opción del 1 al 6.")
+        send_message(user_id, "❌ Opción no válida. Por favor, selecciona del menú de actualización:")
     
     def mostrar_ayuda_cupos(self, user_id: str):
         """Muestra ayuda detallada sobre las opciones de cupos"""
@@ -346,20 +416,28 @@ Escribe el número de tu opción:"""
         """Solicita confirmación antes de actualizar los cupos usando mensajes interactivos"""
         success = self.interactive_service.send_confirmation_cupos(user_id, descripcion, rango)
         if not success:
-            # Fallback al mensaje de texto tradicional
+            # Fallback al mensaje de texto tradicional con formato descriptivo
             mensaje = f"""⚠️ *Confirmar Actualización*
 
-Has seleccionado:
-📋 *{descripcion}*
-🅿️ *Rango:* {rango}
+Verifica que la información sea correcta:
 
-¿Es correcto este estado del parqueadero?
+📋 *Estado:* {descripcion}
+🅿️ *Disponibilidad:* {rango}
 
-✅ *1* - Sí, confirmar actualización
-❌ *2* - No, volver a seleccionar
-⬅️ *3* - Cancelar y volver al menú"""
+Escribe el número de tu opción para confirmar:
+
+✅ *1* - Confirmar actualización
+   • Guardar cambios y notificar a conductores suscritos
+
+🔄 *2* - Cambiar selección
+   • Volver atrás para elegir otro estado
+
+❌ *3* - Cancelar operación
+   • Descartar cambios y volver al menú principal
+
+💡 *Tip: Los conductores recibirán notificación si hay cupos disponibles*"""
             send_message(user_id, mensaje)
     
     def error_confirmacion_cupos(self, user_id: str):
         """Error en la confirmación de cupos"""
-        send_message(user_id, "❌ Opción inválida. Selecciona 1 (Confirmar), 2 (Volver a seleccionar) o 3 (Cancelar).")
+        send_message(user_id, "❌ Opción no válida. Por favor, selecciona una opción del menú de confirmación:")

@@ -21,6 +21,7 @@ class ParqueaderoRepository(BaseRepository):
         documents = self.collection.find({"tiene_cupos": True}, sort=[("ultima_actualizacion", -1)])
         parqueaderos = []
         for doc in documents:
+            doc["_id"] = str(doc["_id"])  # Convertir ObjectId a string
             parqueaderos.append(Parqueadero(**doc))
         return parqueaderos
     

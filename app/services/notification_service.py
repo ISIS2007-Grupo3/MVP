@@ -69,20 +69,22 @@ class NotificationService:
                 if success:
                     parqueadero = self.parqueadero_repo.find_by_id(parqueadero_id)
                     self.message_service.confirmar_desuscripcion_especifica(conductor_id, parqueadero.name)
+                    return {"success": True, "message": "Desuscripción exitosa", "had_subscriptions": True}
                 else:
                     self.message_service.error_sin_suscripciones(conductor_id)
+                    return {"success": False, "message": "Sin suscripciones", "had_subscriptions": False}
             else:
                 # Desuscribir de todos
                 count = self.suscripcion_repo.desactivar_todas_suscripciones(conductor_id)
                 if count > 0:
                     self.message_service.confirmar_desuscripcion_total(conductor_id)
+                    return {"success": True, "message": "Desuscripción exitosa", "had_subscriptions": True}
                 else:
                     self.message_service.error_sin_suscripciones(conductor_id)
-            
-            return {"success": True, "message": "Desuscripción exitosa"}
+                    return {"success": False, "message": "Sin suscripciones", "had_subscriptions": False}
             
         except Exception as e:
-            return {"success": False, "message": f"Error en desuscripción: {str(e)}"}
+            return {"success": False, "message": f"Error en desuscripción: {str(e)}", "had_subscriptions": None}
 
     def listar_suscripciones_conductor(self, conductor_id: str) -> List[dict]:
         """Lista las suscripciones activas de un conductor"""

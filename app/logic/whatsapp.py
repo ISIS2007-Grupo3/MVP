@@ -146,6 +146,16 @@ def handle_conductor(text: str, user_id: str, db, flow_service: WhatsAppFlowServ
         flow_service.handle_seleccion_parqueadero_suscripcion(text, user_id)
         return
     
+    # Procesar selección de parqueadero para ver detalles
+    if current_step == "viendo_parqueaderos":
+        flow_service.handle_seleccion_parqueadero_detalles(text, user_id)
+        return
+    
+    # Gestionar suscripciones (desuscribir)
+    if current_step == "gestionando_suscripciones":
+        flow_service.handle_gestion_suscripciones(text, user_id)
+        return
+    
     # Si no está en ningún flujo específico, mostrar menú
     flow_service.mostrar_menu_conductor(user_id)
 

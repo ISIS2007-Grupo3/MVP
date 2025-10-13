@@ -79,7 +79,8 @@ class UserRepository(BaseRepository):
         return self.find_by_id(user_id)
     def actualizar_nombre(self, user_id: str, nombre: str) -> User:
         update_data = {
-            "name": nombre
+            "name": nombre,
+            "estado_registro": "completo"  
         }
         self.collection.update_one({"_id": user_id}, {"$set": update_data})
         return self.find_by_id(user_id)
