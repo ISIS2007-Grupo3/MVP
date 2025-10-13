@@ -83,3 +83,11 @@ class UserRepository(BaseRepository):
         }
         self.collection.update_one({"_id": user_id}, {"$set": update_data})
         return self.find_by_id(user_id)
+    
+    def actualizar_contexto_temporal(self, user_id: str, contexto: dict) -> User:
+        """Actualiza el contexto temporal del usuario"""
+        update_data = {
+            "estado_chat.contexto_temporal": contexto
+        }
+        self.collection.update_one({"_id": user_id}, {"$set": update_data})
+        return self.find_by_id(user_id)

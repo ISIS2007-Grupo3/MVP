@@ -24,3 +24,10 @@ def actualizar_estado_registro(wa_id: str, estado_registro: str, db):
     repo = UserRepository(db)
     usuario_actualizado = repo.actualizar_estado_registro(wa_id, estado_registro)
     return usuario_actualizado
+
+def actualizar_contexto_temporal(wa_id: str, contexto: dict, db):
+    """
+    Actualiza el contexto temporal del usuario (para guardar datos temporales durante flujos)
+    """
+    repo = UserRepository(db)
+    return repo.actualizar_contexto_temporal(wa_id, contexto)

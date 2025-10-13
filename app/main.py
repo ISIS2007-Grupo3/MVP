@@ -3,9 +3,11 @@ from fastapi import Depends, FastAPI, Request, HTTPException
 from fastapi.responses import Response
 from app.routers import webhook_router
 from app.database.db_conn import get_db
-from app.models.database_models import Parqueadero, User, GestorParqueadero
+from app.models.database_models import Parqueadero, User, GestorParqueadero, Suscripcion
 from app.repositories.user_repositories import ConductorRepository, UserRepository, GestorParqueaderoRepository
 from app.repositories.parqueadero_repository import ParqueaderoRepository
+from app.repositories.suscripcion_repository import SuscripcionRepository
+from app.services.notification_service import NotificationService
 
 app = FastAPI()
 
@@ -99,3 +101,79 @@ async def listar_parqueaderos(db = Depends(get_db)):
     parqueadero_repo = ParqueaderoRepository(db)
     parqueaderos = parqueadero_repo.find_all()
     return [p.model_dump(by_alias=True) for p in parqueaderos]
+
+# ===== ENDPOINTS DE SUSCRIPCIONES Y NOTIFICACIONES =====
+
+@app.post("/suscribir-conductor")
+async def suscribir_conductor(conductor_id: str, parqueadero_id: str = None, db = Depends(get_db)):
+    """
+    Suscribe un conductor a notificaciones de parqueaderos
+    - conductor_id: WhatsApp ID del conductor (ej: 573001234567)
+    - parqueadero_id: ID del parqueadero específico (opcional, si no se envía se suscribe a todos)
+    """
+    notification_service = NotificationService(db)
+    result = notification_service.suscribir_conductor(conductor_id, parqueadero_id)
+    
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result["message"])
+    
+    return {"message": result["message"]}
+
+@app.delete("/desuscribir-conductor")
+async def desuscribir_conductor(conductor_id: str, parqueadero_id: str = None, db = Depends(get_db)):
+    """
+    Desuscribe un conductor de notificaciones
+    - conductor_id: WhatsApp ID del conductor
+    - parqueadero_id: ID del parqueadero específico (opcional, si no se envía se desuscribe de todos)
+    """
+    notification_service = NotificationService(db)
+    result = notification_service.desuscribir_conductor(conductor_id, parqueadero_id)
+    
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result["message"])
+    
+    return {"message": result["message"]}
+
+@app.get("/conductor/{conductor_id}/suscripciones")
+async def listar_suscripciones_conductor(conductor_id: str, db = Depends(get_db)):
+    """
+    Lista las suscripciones activas de un conductor
+    """
+    notification_service = NotificationService(db)
+    suscripciones = notification_service.listar_suscripciones_conductor(conductor_id)
+    return {"suscripciones": suscripciones}
+
+@app.put("/parqueadero/{parqueadero_id}/actualizar-cupos")
+async def actualizar_cupos_parqueadero(
+    parqueadero_id: str, 
+    cupos_libres: str, 
+    tiene_cupos: bool, 
+    db = Depends(get_db)
+):
+    """
+    Actualiza los cupos de un parqueadero y envía notificaciones automáticamente
+    - parqueadero_id: ID del parqueadero
+    - cupos_libres: Número de cupos libres (como string)
+    - tiene_cupos: Boolean indicando si hay cupos disponibles
+    """
+    parqueadero_repo = ParqueaderoRepository(db)
+    notification_service = NotificationService(db)
+    
+    # Verificar que el parqueadero existe
+    parqueadero = parqueadero_repo.find_by_id(parqueadero_id)
+    if not parqueadero:
+        raise HTTPException(status_code=404, detail="Parqueadero no encontrado")
+    
+    # Actualizar cupos y enviar notificaciones
+    result = parqueadero_repo.actualizar_cupos_con_notificacion(
+        parqueadero_id, 
+        cupos_libres, 
+        tiene_cupos, 
+        notification_service
+    )
+    
+    return {
+        "message": "Cupos actualizados exitosamente",
+        "parqueadero": result["parqueadero"],
+        "notificaciones_enviadas": result["notificaciones_enviadas"]
+    }

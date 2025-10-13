@@ -32,3 +32,17 @@ class ParqueaderoRepository(BaseRepository):
         }
         self.collection.update_one({"_id": parking_id}, {"$set": update_data})
         return self.find_by_id(parking_id)
+    
+    def actualizar_cupos_con_notificacion(self, parking_id: str, cupos_libres: str, tiene_cupos: bool, notification_service) -> dict:
+        """Actualiza cupos y envía notificaciones si hay cupos disponibles"""
+        parqueadero = self.actualizar_cupos(parking_id, cupos_libres, tiene_cupos)
+        
+        # Si hay cupos disponibles, notificar a suscriptores
+        notificaciones_enviadas = 0
+        if tiene_cupos and int(cupos_libres) > 0:
+            notificaciones_enviadas = notification_service.notificar_cupo_liberado(parking_id)
+        
+        return {
+            "parqueadero": parqueadero.model_dump(by_alias=True),
+            "notificaciones_enviadas": notificaciones_enviadas
+        }
