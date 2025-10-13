@@ -1,6 +1,7 @@
 from app.logic.send_message import send_message
 from app.repositories.parqueadero_repository import ParqueaderoRepository
 from app.utils.tiempo_utils import formatear_tiempo_para_usuario
+from app.services.whatsapp_interactive_service import WhatsAppInteractiveService
 from typing import List
 
 class WhatsAppMessageService:
@@ -11,6 +12,7 @@ class WhatsAppMessageService:
     
     def __init__(self, db=None):
         self.db = db
+        self.interactive_service = WhatsAppInteractiveService()
     
     # ===== MENSAJES DE BIENVENIDA Y REGISTRO =====
     
@@ -33,8 +35,11 @@ class WhatsAppMessageService:
     # ===== MENÚS =====
     
     def mostrar_menu_conductor(self, user_id: str):
-        """Muestra el menú principal para conductores"""
-        menu = """🚗 Menú Conductor:
+        """Muestra el menú principal para conductores usando mensajes interactivos"""
+        success = self.interactive_service.send_conductor_menu(user_id)
+        if not success:
+            # Fallback al mensaje de texto tradicional
+            menu = """🚗 Menú Conductor:
 Selecciona una de las siguientes opciones:
 
 1️⃣ Ver parqueaderos disponibles
@@ -42,11 +47,14 @@ Selecciona una de las siguientes opciones:
 3️⃣ Salir
 
 Escribe el número de la opción que deseas:"""
-        send_message(user_id, menu)
+            send_message(user_id, menu)
     
     def mostrar_menu_suscripciones(self, user_id: str):
-        """Muestra el menú de opciones de suscripción"""
-        menu = """🔔 *Notificaciones de Parqueaderos*
+        """Muestra el menú de opciones de suscripción usando mensajes interactivos"""
+        success = self.interactive_service.send_suscripciones_menu(user_id)
+        if not success:
+            # Fallback al mensaje de texto tradicional
+            menu = """🔔 *Notificaciones de Parqueaderos*
 
 Selecciona una opción:
 
@@ -57,11 +65,14 @@ Selecciona una opción:
 5️⃣ Volver al menú principal
 
 Escribe el número de tu opción:"""
-        send_message(user_id, menu)
+            send_message(user_id, menu)
     
     def mostrar_menu_gestor(self, user_id: str):
-        """Muestra el menú principal para gestores"""
-        menu = """🏢 Menú Gestor de Parqueadero:
+        """Muestra el menú principal para gestores usando mensajes interactivos"""
+        success = self.interactive_service.send_gestor_menu(user_id)
+        if not success:
+            # Fallback al mensaje de texto tradicional
+            menu = """🏢 Menú Gestor de Parqueadero:
 Selecciona una de las siguientes opciones:
 
 1️⃣ Ver información de mi parqueadero
@@ -69,7 +80,7 @@ Selecciona una de las siguientes opciones:
 3️⃣ Salir
 
 Escribe el número de la opción que deseas:"""
-        send_message(user_id, menu)
+            send_message(user_id, menu)
     
     # ===== MENSAJES DE PARQUEADEROS =====
     
@@ -92,14 +103,17 @@ Escribe el número de la opción que deseas:"""
             send_message(user_id, "No hay parqueaderos con cupos disponibles en este momento.")
     
     def mostrar_parqueaderos_para_suscripcion(self, user_id: str, parqueaderos: List):
-        """Muestra parqueaderos disponibles para suscripción"""
+        """Muestra parqueaderos disponibles para suscripción usando mensajes interactivos"""
         if parqueaderos:
-            mensaje = "*Parqueaderos disponibles:*\n\n"
-            for i, p in enumerate(parqueaderos, 1):
-                mensaje += f"{i}️⃣ *{p.name}*\n   📍 {p.ubicacion}\n\n"
-            mensaje += f"{len(parqueaderos) + 1}️⃣ Volver al menú de suscripciones\n\n"
-            mensaje += "Escribe el número del parqueadero al que te quieres suscribir:"
-            send_message(user_id, mensaje)
+            success = self.interactive_service.send_parqueaderos_list(user_id, parqueaderos)
+            if not success:
+                # Fallback al mensaje de texto tradicional
+                mensaje = "*Parqueaderos disponibles:*\n\n"
+                for i, p in enumerate(parqueaderos, 1):
+                    mensaje += f"{i}️⃣ *{p.name}*\n   📍 {p.ubicacion}\n\n"
+                mensaje += f"{len(parqueaderos) + 1}️⃣ Volver al menú de suscripciones\n\n"
+                mensaje += "Escribe el número del parqueadero al que te quieres suscribir:"
+                send_message(user_id, mensaje)
         else:
             send_message(user_id, "❌ No hay parqueaderos disponibles")
     
@@ -211,8 +225,11 @@ Para desuscribirte, escribe "desuscribir" """
     # ===== MENSAJES DE ACTUALIZACIÓN DE CUPOS =====
     
     def solicitar_cupos_actualizacion(self, user_id: str):
-        """Solicita información para actualizar cupos usando opciones enumeradas"""
-        mensaje = """📝 *Actualizar Estado del Parqueadero*
+        """Solicita información para actualizar cupos usando mensajes interactivos"""
+        success = self.interactive_service.send_cupos_options(user_id)
+        if not success:
+            # Fallback al mensaje de texto tradicional
+            mensaje = """📝 *Actualizar Estado del Parqueadero*
 
 Selecciona la opción que mejor describe la situación actual:
 
@@ -226,7 +243,7 @@ Selecciona la opción que mejor describe la situación actual:
 💡 *Los conductores recibirán notificación si hay cupos disponibles (opciones 2-5)*
 
 Escribe el número de tu opción:"""
-        send_message(user_id, mensaje)
+            send_message(user_id, mensaje)
     
     def confirmar_actualizacion_cupos(self, user_id: str, cupos_libres: str, notificaciones_enviadas: int):
         """Confirma la actualización de cupos"""
@@ -326,8 +343,11 @@ Escribe el número de tu opción:"""
     # ===== MENSAJES DE CONFIRMACIÓN DE CUPOS =====
     
     def solicitar_confirmacion_cupos(self, user_id: str, opcion: int, descripcion: str, rango: str):
-        """Solicita confirmación antes de actualizar los cupos"""
-        mensaje = f"""⚠️ *Confirmar Actualización*
+        """Solicita confirmación antes de actualizar los cupos usando mensajes interactivos"""
+        success = self.interactive_service.send_confirmation_cupos(user_id, descripcion, rango)
+        if not success:
+            # Fallback al mensaje de texto tradicional
+            mensaje = f"""⚠️ *Confirmar Actualización*
 
 Has seleccionado:
 📋 *{descripcion}*
@@ -338,7 +358,7 @@ Has seleccionado:
 ✅ *1* - Sí, confirmar actualización
 ❌ *2* - No, volver a seleccionar
 ⬅️ *3* - Cancelar y volver al menú"""
-        send_message(user_id, mensaje)
+            send_message(user_id, mensaje)
     
     def error_confirmacion_cupos(self, user_id: str):
         """Error en la confirmación de cupos"""

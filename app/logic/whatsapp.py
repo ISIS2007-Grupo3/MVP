@@ -5,10 +5,14 @@ import app.logic.sesion as sesion
 
 def handle_message(payload: WebhookPayload, db):
     """
-    Entrada principal para procesar mensajes
+    Entrada principal para procesar mensajes (texto e interactivos)
     """
     msg = payload.get_mensaje()
-    if not msg or not msg.text:
+    if not msg:
+        return None
+    
+    # Verificar si es mensaje de texto o interactivo
+    if not msg.text and not msg.interactive:
         return None
     
     # Inicializar servicios
@@ -53,25 +57,52 @@ def handle_nuevo_usuario(user_id: str, db, message_service: WhatsAppMessageServi
 
 def handle_usuario_nombre(msg: Message, db, message_service: WhatsAppMessageService):
     """
-    Completa el proceso de registro con el nombre del usuario
+    Maneja la actualización del nombre para usuarios en proceso de registro
     """
-    usuario = sesion.obtener_usuario(msg.from_, db)
-    
-    if usuario.estado_registro == "esperando_nombre":
+    # Para registro de nombre, solo aceptar mensajes de texto
+    if msg.type == "text" and msg.text and msg.text.body:
+        # Actualizar nombre y completar registro
         sesion.actualizar_nombre(msg.from_, msg.text.body, db)
+        
+        # Obtener usuario actualizado
         usuario = sesion.obtener_usuario(msg.from_, db)
-        message_service.confirmar_registro(msg.from_, usuario.name)
-        sesion.actualizar_estado_registro(msg.from_, "completo", db)
-        sesion.actualizar_estado_chat(msg.from_, "inicial", db)
+        if usuario and usuario.estado_registro == "completo":
+            message_service.confirmar_registro(msg.from_, usuario.name)
+            return usuario
+        
         return usuario
     
     return None
 
+def extract_message_text(msg: Message) -> str:
+    """
+    Extrae el texto del mensaje, ya sea de texto tradicional o interactivo
+    """
+    print(f"Debug - Tipo de mensaje: {msg.type}")
+    
+    if msg.type == "text" and msg.text:
+        text = msg.text.body.lower().strip()
+        print(f"Debug - Texto extraído: {text}")
+        return text
+    elif msg.type == "interactive" and msg.interactive:
+        print(f"Debug - Mensaje interactivo: {msg.interactive}")
+        if msg.interactive.type == "button_reply" and msg.interactive.button_reply:
+            text = msg.interactive.button_reply.id.lower().strip()
+            print(f"Debug - ID botón extraído: {text}")
+            return text
+        elif msg.interactive.type == "list_reply" and msg.interactive.list_reply:
+            text = msg.interactive.list_reply.id.lower().strip()
+            print(f"Debug - ID lista extraído: {text}")
+            return text
+    
+    print("Debug - No se pudo extraer texto")
+    return ""
+
 def handle_user_interaction(msg: Message, usuario, db, message_service: WhatsAppMessageService, flow_service: WhatsAppFlowService):
     """
-    Maneja la interacción principal con usuarios registrados
+    Maneja la interacción principal con usuarios registrados (texto e interactivos)
     """
-    text = msg.text.body.lower().strip()
+    text = extract_message_text(msg)
     
     if usuario.estado_chat.paso_actual == "inicial":
         message_service.saludar_usuario_registrado(msg.from_, usuario.name)

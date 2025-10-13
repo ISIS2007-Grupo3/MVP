@@ -8,6 +8,7 @@ from app.repositories.user_repositories import ConductorRepository, UserReposito
 from app.repositories.parqueadero_repository import ParqueaderoRepository
 from app.repositories.suscripcion_repository import SuscripcionRepository
 from app.services.notification_service import NotificationService
+from app.services.whatsapp_interactive_service import WhatsAppInteractiveService
 
 app = FastAPI()
 
@@ -177,3 +178,36 @@ async def actualizar_cupos_parqueadero(
         "parqueadero": result["parqueadero"],
         "notificaciones_enviadas": result["notificaciones_enviadas"]
     }
+
+@app.post("/test-interactive-message")
+async def test_interactive_message(user_phone: str, message_type: str = "menu"):
+    """
+    Endpoint para probar mensajes interactivos de WhatsApp
+    """
+    interactive_service = WhatsAppInteractiveService()
+    
+    try:
+        if message_type == "conductor_menu":
+            success = interactive_service.send_conductor_menu(user_phone)
+        elif message_type == "gestor_menu":
+            success = interactive_service.send_gestor_menu(user_phone)
+        elif message_type == "suscripciones_menu":
+            success = interactive_service.send_suscripciones_menu(user_phone)
+        elif message_type == "cupos_options":
+            success = interactive_service.send_cupos_options(user_phone)
+        elif message_type == "confirmation":
+            success = interactive_service.send_confirmation_cupos(
+                user_phone, 
+                "Algunos cupos disponibles", 
+                "6-15 cupos"
+            )
+        else:
+            return {"error": "Tipo de mensaje no válido"}
+        
+        return {
+            "success": success,
+            "message": f"Mensaje interactivo '{message_type}' enviado" if success else "Error enviando mensaje"
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

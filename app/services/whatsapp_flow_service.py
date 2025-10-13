@@ -21,8 +21,16 @@ class WhatsAppFlowService:
     # ===== FLUJOS DE CONDUCTOR =====
     
     def handle_conductor_menu_option(self, text: str, user_id: str):
-        """Procesa las opciones del menú principal de conductor"""
-        if text == "1":
+        """Procesa las opciones del menú principal de conductor (texto e interactivo)"""
+        # Manejar respuestas de botones interactivos
+        if text == "ver_parqueaderos":
+            self.handle_ver_parqueaderos(user_id)
+        elif text == "suscripciones":
+            self.handle_mostrar_menu_suscripciones(user_id)
+        elif text == "salir":
+            self.handle_salir(user_id)
+        # Mantener compatibilidad con números tradicionales
+        elif text == "1":
             self.handle_ver_parqueaderos(user_id)
         elif text == "2":
             self.handle_mostrar_menu_suscripciones(user_id)
@@ -45,31 +53,49 @@ class WhatsAppFlowService:
         sesion.actualizar_estado_chat(user_id, "esperando_opcion_suscripcion", self.db)
     
     def handle_suscripcion_menu_option(self, text: str, user_id: str):
-        """Procesa las opciones del menú de suscripciones"""
-        if text == "1":
-            # Suscribirse a todos los parqueaderos
+        """Procesa las opciones del menú de suscripciones (texto e interactivo)"""
+        # Manejar respuestas de lista interactiva
+        if text == "suscribir_todos":
+            result = self.notification_service.suscribir_conductor(user_id, None)
+            if not result["success"]:
+                self.message_service.error_suscripcion_general(user_id, result["message"])
+            self.mostrar_menu_conductor(user_id)
+            
+        elif text == "suscribir_especifico":
+            self.mostrar_parqueaderos_para_suscripcion(user_id)
+            
+        elif text == "ver_suscripciones":
+            self.mostrar_suscripciones_actuales(user_id)
+            
+        elif text == "desuscribir_todos":
+            result = self.notification_service.desuscribir_conductor(user_id, None)
+            if not result["success"]:
+                self.message_service.error_suscripcion_general(user_id, result["message"])
+            self.mostrar_menu_conductor(user_id)
+            
+        elif text == "volver_menu":
+            self.mostrar_menu_conductor(user_id)
+            
+        # Mantener compatibilidad con números tradicionales
+        elif text == "1":
             result = self.notification_service.suscribir_conductor(user_id, None)
             if not result["success"]:
                 self.message_service.error_suscripcion_general(user_id, result["message"])
             self.mostrar_menu_conductor(user_id)
             
         elif text == "2":
-            # Mostrar parqueaderos para suscripción específica
             self.mostrar_parqueaderos_para_suscripcion(user_id)
             
         elif text == "3":
-            # Ver suscripciones actuales
             self.mostrar_suscripciones_actuales(user_id)
             
         elif text == "4":
-            # Desuscribirse de todas
             result = self.notification_service.desuscribir_conductor(user_id, None)
             if not result["success"]:
                 self.message_service.error_suscripcion_general(user_id, result["message"])
             self.mostrar_menu_conductor(user_id)
             
         elif text == "5":
-            # Volver al menú principal
             self.mostrar_menu_conductor(user_id)
             
         else:
@@ -99,8 +125,36 @@ class WhatsAppFlowService:
             self.handle_mostrar_menu_suscripciones(user_id)
     
     def handle_seleccion_parqueadero_suscripcion(self, text: str, user_id: str):
-        """Maneja la selección de parqueadero para suscripción"""
+        """Maneja la selección de parqueadero para suscripción (texto e interactivo)"""
         try:
+            # Manejar respuestas de lista interactiva
+            if text == "volver_suscripciones":
+                self.handle_mostrar_menu_suscripciones(user_id)
+                return
+                
+            if text.startswith("parqueadero_"):
+                # Extraer índice del ID del parqueadero
+                index = int(text.split("_")[1])
+                usuario = sesion.obtener_usuario(user_id, self.db)
+                contexto_temporal = usuario.estado_chat.contexto_temporal or {}
+                parqueaderos_ids = contexto_temporal.get('parqueaderos', [])
+                
+                if 0 <= index < len(parqueaderos_ids):
+                    parqueadero_id = parqueaderos_ids[index]
+                    result = self.notification_service.suscribir_conductor(user_id, parqueadero_id)
+                    
+                    if not result["success"]:
+                        self.message_service.error_suscripcion_general(user_id, result["message"])
+                    else:
+                        # Limpiar contexto temporal después de suscripción exitosa
+                        sesion.actualizar_contexto_temporal(user_id, {}, self.db)
+                else:
+                    self.message_service.error_numero_invalido(user_id)
+                    
+                self.mostrar_menu_conductor(user_id)
+                return
+            
+            # Manejar entrada de texto tradicional (números)
             opcion = int(text)
             usuario = sesion.obtener_usuario(user_id, self.db)
             print(f"Debug: Usuario obtenido: {usuario.id if usuario else 'None'}")
@@ -200,8 +254,16 @@ class WhatsAppFlowService:
     # ===== FLUJOS DE GESTOR =====
     
     def handle_gestor_menu_option(self, text: str, user_id: str):
-        """Procesa las opciones del menú de gestor"""
-        if text == "1":
+        """Procesa las opciones del menú de gestor (texto e interactivo)"""
+        # Manejar respuestas de botones interactivos
+        if text == "ver_info_parqueadero":
+            self.handle_ver_info_parqueadero_gestor(user_id)
+        elif text == "actualizar_cupos":
+            self.handle_solicitar_actualizacion_cupos(user_id)
+        elif text == "salir":
+            self.handle_salir(user_id)
+        # Mantener compatibilidad con números tradicionales
+        elif text == "1":
             self.handle_ver_info_parqueadero_gestor(user_id)
         elif text == "2":
             self.handle_solicitar_actualizacion_cupos(user_id)
@@ -234,7 +296,7 @@ class WhatsAppFlowService:
         sesion.actualizar_estado_chat(user_id, "esperando_cambio_cupos", self.db)
     
     def handle_cupos_gestor(self, text: str, user_id: str):
-        """Procesa la actualización de cupos del gestor usando opciones enumeradas"""
+        """Procesa la actualización de cupos del gestor usando opciones enumeradas (texto e interactivo)"""
         usuario = sesion.obtener_usuario(user_id, self.db)
         current_step = usuario.estado_chat.paso_actual
         
@@ -244,12 +306,45 @@ class WhatsAppFlowService:
             return
         
         try:
+            # Manejar respuestas de lista interactiva
+            opciones_interactivas = {
+                "cupos_lleno": (1, "0", False, "Parqueadero lleno", "0 cupos"),
+                "cupos_pocos": (2, "3", True, "Pocos cupos disponibles", "1-5 cupos"),
+                "cupos_algunos": (3, "10", True, "Algunos cupos disponibles", "6-15 cupos"),
+                "cupos_muchos": (4, "23", True, "Muchos cupos disponibles", "16-30 cupos"),
+                "cupos_casi_vacio": (5, "35", True, "Parqueadero casi vacío", "30+ cupos"),
+                "volver_menu_gestor": None
+            }
+            
+            if text in opciones_interactivas:
+                if text == "volver_menu_gestor":
+                    self.mostrar_menu_gestor(user_id)
+                    return
+                    
+                opcion, cupos_libres, tiene_cupos, descripcion, rango = opciones_interactivas[text]
+                
+                # Guardar datos en contexto temporal y solicitar confirmación
+                contexto = {
+                    "opcion": opcion,
+                    "cupos_libres": cupos_libres,
+                    "tiene_cupos": tiene_cupos,
+                    "descripcion": descripcion,
+                    "rango": rango
+                }
+                sesion.actualizar_contexto_temporal(user_id, contexto, self.db)
+                
+                # Mostrar mensaje de confirmación
+                self.message_service.solicitar_confirmacion_cupos(user_id, opcion, descripcion, rango)
+                sesion.actualizar_estado_chat(user_id, "esperando_confirmacion_cupos", self.db)
+                return
+            
             # Manejar comandos especiales
             text_lower = text.strip().lower()
             if text_lower in ['ayuda', 'help', 'info', 'información']:
                 self.message_service.mostrar_ayuda_cupos(user_id)
                 return
             
+            # Manejar entrada de texto tradicional (números)
             opcion = int(text.strip())
             
             # Mapear opciones a valores de cupos con rangos
@@ -295,8 +390,23 @@ class WhatsAppFlowService:
             self.message_service.error_suscripcion_general(user_id, "Error al actualizar cupos")
     
     def handle_confirmacion_cupos(self, text: str, user_id: str):
-        """Maneja la confirmación de la actualización de cupos"""
+        """Maneja la confirmación de la actualización de cupos (texto e interactivo)"""
         try:
+            # Manejar respuestas de botones interactivos
+            if text == "confirmar_cupos":
+                self.ejecutar_actualizacion_cupos(user_id)
+                return
+            elif text == "reseleccionar_cupos":
+                self.message_service.solicitar_cupos_actualizacion(user_id)
+                sesion.actualizar_estado_chat(user_id, "esperando_cambio_cupos", self.db)
+                sesion.actualizar_contexto_temporal(user_id, {}, self.db)
+                return
+            elif text == "cancelar_cupos":
+                sesion.actualizar_contexto_temporal(user_id, {}, self.db)
+                self.mostrar_menu_gestor(user_id)
+                return
+            
+            # Manejar entrada de texto tradicional (números)
             opcion_confirmacion = int(text.strip())
             
             if opcion_confirmacion == 1:

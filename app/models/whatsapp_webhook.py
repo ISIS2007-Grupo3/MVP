@@ -9,6 +9,40 @@ class Text(BaseModel):
     """
     body: str
 
+class ButtonReply(BaseModel):
+    """
+    Modelo para respuestas de botones interactivos
+    Atributos:
+        id (str): ID del botón seleccionado.
+        title (str): Título del botón seleccionado.
+    """
+    id: str
+    title: str
+
+class ListReply(BaseModel):
+    """
+    Modelo para respuestas de listas interactivas
+    Atributos:
+        id (str): ID de la opción seleccionada.
+        title (str): Título de la opción seleccionada.
+        description (Optional[str]): Descripción de la opción seleccionada.
+    """
+    id: str
+    title: str
+    description: Optional[str] = None
+
+class Interactive(BaseModel):
+    """
+    Modelo para mensajes interactivos
+    Atributos:
+        type (str): Tipo de interacción ("button_reply" o "list_reply").
+        button_reply (Optional[ButtonReply]): Respuesta de botón si aplica.
+        list_reply (Optional[ListReply]): Respuesta de lista si aplica.
+    """
+    type: str
+    button_reply: Optional[ButtonReply] = None
+    list_reply: Optional[ListReply] = None
+
 class Message(BaseModel):
     """
     Modelo para los mensajes en el webhook de WhatsApp
@@ -16,14 +50,16 @@ class Message(BaseModel):
         from_ (str): Número de teléfono del remitente.
         id (str): ID del mensaje.
         timestamp (str): Marca de tiempo del mensaje.
-        type (str): Tipo de mensaje (por ejemplo, "text").
+        type (str): Tipo de mensaje (por ejemplo, "text", "interactive").
         text (Optional[Text]): Contenido del mensaje, si es de tipo texto.
+        interactive (Optional[Interactive]): Contenido interactivo, si es de tipo interactive.
     """
     from_: str = Field(..., alias="from")  # "from" es palabra reservada en Python
     id: str
     timestamp: str
     type: str
     text: Optional[Text] = None
+    interactive: Optional[Interactive] = None
 
 class Metadata(BaseModel):
     """

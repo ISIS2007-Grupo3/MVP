@@ -33,7 +33,15 @@ async def obtener_mensaje(payload: WebhookPayload, db= Depends(get_db)):
     print(payload)
     message_repo = MessageRepository(db)
     msg = payload.get_mensaje()
-    if msg and msg.text:
+    
+    # Procesar tanto mensajes de texto como interactivos
+    if msg and (msg.text or msg.interactive):
+        print(f"Tipo de mensaje: {msg.type}")
+        if msg.text:
+            print(f"Texto: {msg.text.body}")
+        if msg.interactive:
+            print(f"Interactivo: {msg.interactive}")
+            
         message_repo.crear_mensaje(msg.model_dump())
         handle_message(payload, db)    
     # mensaje = payload.get_mensaje()  
