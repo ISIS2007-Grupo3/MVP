@@ -9,7 +9,7 @@ def obtener_parqueaderos_con_cupos(db):
 
 def obtener_parqueadero_gestor(wa_id: str, db):
     gestor_repo = GestorParqueaderoRepository(db)
-    return gestor_repo.obtener_parqueadero(wa_id)
+    return gestor_repo.obtener_parqueadero_id(wa_id)
 
 def actualizar_cupos_parqueadero(wa_id: str, cupos_libres: str, tiene_cupo: bool, db):
     parqueadero = obtener_parqueadero_gestor(wa_id, db)
