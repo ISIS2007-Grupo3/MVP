@@ -38,7 +38,7 @@ async def crear_gestor(gestor_crear: GestorParqueadero, db = Depends(get_db)):
     - name: Nombre del gestor
     - rol: Debe ser "gestor_parqueadero"
     - estado_registro: Debe ser "completo"
-    - **Parametros opcionales:**
+    - *Parametros opcionales:*
         - parqueadero_id: ID del parqueadero que gestiona (opcional al crear, se puede asociar después)
         - estado_chat: Se puede inicializar vacío o con valores por defecto
     """

@@ -234,15 +234,107 @@ class WhatsAppFlowService:
         sesion.actualizar_estado_chat(user_id, "esperando_cambio_cupos", self.db)
     
     def handle_cupos_gestor(self, text: str, user_id: str):
-        """Procesa la actualización de cupos del gestor"""
+        """Procesa la actualización de cupos del gestor usando opciones enumeradas"""
+        usuario = sesion.obtener_usuario(user_id, self.db)
+        current_step = usuario.estado_chat.paso_actual
+        
+        # Si está esperando confirmación, manejar esa lógica
+        if current_step == "esperando_confirmacion_cupos":
+            self.handle_confirmacion_cupos(text, user_id)
+            return
+        
         try:
-            # Parsear input: "cupos_libres,tiene_cupos"
-            parts = text.split(',')
-            if len(parts) != 2:
-                raise ValueError("Formato incorrecto")
+            # Manejar comandos especiales
+            text_lower = text.strip().lower()
+            if text_lower in ['ayuda', 'help', 'info', 'información']:
+                self.message_service.mostrar_ayuda_cupos(user_id)
+                return
+            
+            opcion = int(text.strip())
+            
+            # Mapear opciones a valores de cupos con rangos
+            opciones_cupos = {
+                1: ("0", False, "Parqueadero lleno", "0 cupos"),           
+                2: ("3", True, "Pocos cupos disponibles", "1-5 cupos"),      
+                3: ("10", True, "Algunos cupos disponibles", "6-15 cupos"),   
+                4: ("23", True, "Muchos cupos disponibles", "16-30 cupos"),    
+                5: ("35", True, "Parqueadero casi vacío", "30+ cupos"),      
+                6: None  # Volver al menú
+            }
+            
+            if opcion == 6:
+                # Volver al menú principal
+                self.mostrar_menu_gestor(user_id)
+                return
+            
+            if opcion not in opciones_cupos or opciones_cupos[opcion] is None:
+                raise ValueError("Opción inválida")
+            
+            cupos_libres, tiene_cupos, descripcion, rango = opciones_cupos[opcion]
+            
+            # Guardar datos en contexto temporal y solicitar confirmación
+            contexto = {
+                "opcion": opcion,
+                "cupos_libres": cupos_libres,
+                "tiene_cupos": tiene_cupos,
+                "descripcion": descripcion,
+                "rango": rango
+            }
+            sesion.actualizar_contexto_temporal(user_id, contexto, self.db)
+            
+            # Mostrar mensaje de confirmación
+            self.message_service.solicitar_confirmacion_cupos(user_id, opcion, descripcion, rango)
+            sesion.actualizar_estado_chat(user_id, "esperando_confirmacion_cupos", self.db)
+            
+        except (ValueError, IndexError):
+            # Si no es un número válido, mostrar el error
+            if not text.strip().lower() in ['ayuda', 'help', 'info', 'información']:
+                self.message_service.error_formato_cupos(user_id)
+        except Exception as e:
+            print(f"Error en actualización de cupos: {e}")
+            self.message_service.error_suscripcion_general(user_id, "Error al actualizar cupos")
+    
+    def handle_confirmacion_cupos(self, text: str, user_id: str):
+        """Maneja la confirmación de la actualización de cupos"""
+        try:
+            opcion_confirmacion = int(text.strip())
+            
+            if opcion_confirmacion == 1:
+                # Confirmar actualización
+                self.ejecutar_actualizacion_cupos(user_id)
+            elif opcion_confirmacion == 2:
+                # Volver a seleccionar
+                self.message_service.solicitar_cupos_actualizacion(user_id)
+                sesion.actualizar_estado_chat(user_id, "esperando_cambio_cupos", self.db)
+                # Limpiar contexto
+                sesion.actualizar_contexto_temporal(user_id, {}, self.db)
+            elif opcion_confirmacion == 3:
+                # Cancelar y volver al menú
+                sesion.actualizar_contexto_temporal(user_id, {}, self.db)
+                self.mostrar_menu_gestor(user_id)
+            else:
+                self.message_service.error_confirmacion_cupos(user_id)
                 
-            cupos_libres = parts[0].strip()
-            tiene_cupos = parts[1].strip().lower() == 'true'
+        except (ValueError, IndexError):
+            self.message_service.error_confirmacion_cupos(user_id)
+        except Exception as e:
+            print(f"Error en confirmación de cupos: {e}")
+            self.message_service.error_suscripcion_general(user_id, "Error en confirmación")
+    
+    def ejecutar_actualizacion_cupos(self, user_id: str):
+        """Ejecuta la actualización de cupos con los datos confirmados"""
+        try:
+            # Obtener datos del contexto temporal
+            usuario = sesion.obtener_usuario(user_id, self.db)
+            contexto = usuario.estado_chat.contexto_temporal or {}
+            
+            cupos_libres = contexto.get("cupos_libres")
+            tiene_cupos = contexto.get("tiene_cupos")
+            descripcion = contexto.get("descripcion")
+            rango = contexto.get("rango")
+            
+            if not all([cupos_libres is not None, tiene_cupos is not None, descripcion, rango]):
+                raise ValueError("Datos incompletos en contexto")
             
             # Obtener parqueadero del gestor
             parqueadero_id = self.gestor_repo.obtener_parqueadero_id(user_id)
@@ -251,24 +343,32 @@ class WhatsAppFlowService:
                 self.mostrar_menu_gestor(user_id)
                 return
             
-            # Actualizar cupos y enviar notificaciones
+            # Actualizar cupos con rango y enviar notificaciones
             result = self.parqueadero_repo.actualizar_cupos_con_notificacion(
                 parqueadero_id, 
                 cupos_libres, 
-                tiene_cupos, 
+                tiene_cupos,
+                rango,
+                descripcion,
                 self.notification_service
             )
             
-            self.message_service.confirmar_actualizacion_cupos(
+            # Mostrar confirmación personalizada
+            self.message_service.confirmar_actualizacion_cupos_con_descripcion(
                 user_id, 
-                cupos_libres, 
+                descripcion,
+                rango,  # Usar rango en lugar de cupos exactos
                 result["notificaciones_enviadas"]
             )
             
-        except (ValueError, IndexError):
-            self.message_service.error_formato_cupos(user_id)
-        
-        self.mostrar_menu_gestor(user_id)
+            # Limpiar contexto y volver al menú
+            sesion.actualizar_contexto_temporal(user_id, {}, self.db)
+            self.mostrar_menu_gestor(user_id)
+            
+        except Exception as e:
+            print(f"Error ejecutando actualización: {e}")
+            self.message_service.error_suscripcion_general(user_id, "Error al actualizar cupos")
+            self.mostrar_menu_gestor(user_id)
     
     def mostrar_menu_gestor(self, user_id: str):
         """Muestra el menú principal del gestor y actualiza el estado"""

@@ -1,7 +1,7 @@
 from app.repositories.base_repository import BaseRepository
 from app.models.database_models import Suscripcion
 from pymongo.database import Database
-import time
+from app.utils.tiempo_utils import obtener_tiempo_bogota
 from typing import List, Optional
 
 class SuscripcionRepository(BaseRepository):
@@ -18,7 +18,7 @@ class SuscripcionRepository(BaseRepository):
         data = {
             "conductor_id": conductor_id,
             "parqueadero_id": parqueadero_id,
-            "fecha_suscripcion": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "fecha_suscripcion": obtener_tiempo_bogota(),
             "activa": True
         }
         return super().create(data)

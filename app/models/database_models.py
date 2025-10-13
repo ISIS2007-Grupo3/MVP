@@ -13,7 +13,9 @@ class Parqueadero(BaseModel):
     ubicacion: str
     capacidad: int
     tiene_cupos: bool = True
-    cupos_libres: str = "0"  # Valor por defecto
+    cupos_libres: str = "0"  # Valor por defecto para compatibilidad
+    rango_cupos: Optional[str] = None  # Nuevo campo para almacenar el rango
+    estado_ocupacion: Optional[str] = None  # Descripción del estado (lleno, pocos cupos, etc.)
     ultima_actualizacion: Optional[str] = None
     class Config:
         allow_population_by_field_name = True

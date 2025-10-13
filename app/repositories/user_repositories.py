@@ -1,8 +1,8 @@
 from app.repositories.base_repository import BaseRepository
-from app.models.database_models import Conductor, GestorParqueadero, User
+from app.models.database_models import User, Conductor, GestorParqueadero, EstadoChat
+from typing import Union, List, Dict, Any
 from pymongo.database import Database
-from typing import Union
-import time
+from app.utils.tiempo_utils import obtener_tiempo_bogota
 
 class ConductorRepository(BaseRepository):
     def __init__(self, db: Database):
@@ -65,7 +65,7 @@ class UserRepository(BaseRepository):
     
     def actualizar_estado_chat(self, user_id: str, paso_actual: str) -> User:
         update_data = {
-            "estado_chat.ultima_interaccion": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "estado_chat.ultima_interaccion": obtener_tiempo_bogota(),
             "estado_chat.paso_actual": paso_actual
         }
         self.collection.update_one({"_id": user_id}, {"$set": update_data})

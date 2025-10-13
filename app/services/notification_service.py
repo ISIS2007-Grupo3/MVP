@@ -1,6 +1,7 @@
 from app.repositories.suscripcion_repository import SuscripcionRepository
 from app.repositories.parqueadero_repository import ParqueaderoRepository
 from app.services.whatsapp_message_service import WhatsAppMessageService
+from app.utils.tiempo_utils import formatear_tiempo_para_usuario
 from pymongo.database import Database
 from typing import List
 
@@ -94,13 +95,13 @@ class NotificationService:
                 result.append({
                     "tipo": "específico",
                     "parqueadero": parqueadero.name if parqueadero else "Parqueadero no encontrado",
-                    "fecha": suscripcion.fecha_suscripcion
+                    "fecha": formatear_tiempo_para_usuario(suscripcion.fecha_suscripcion)
                 })
             else:
                 result.append({
                     "tipo": "global",
                     "parqueadero": "Todos los parqueaderos",
-                    "fecha": suscripcion.fecha_suscripcion
+                    "fecha": formatear_tiempo_para_usuario(suscripcion.fecha_suscripcion)
                 })
         
         return result

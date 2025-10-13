@@ -139,5 +139,9 @@ def handle_gestor(text: str, user_id: str, db, flow_service: WhatsAppFlowService
         flow_service.handle_cupos_gestor(text, user_id)
         return
     
+    if current_step == "esperando_confirmacion_cupos":
+        flow_service.handle_cupos_gestor(text, user_id)
+        return
+    
     # Si no está en ningún flujo específico, mostrar menú
     flow_service.mostrar_menu_gestor(user_id)

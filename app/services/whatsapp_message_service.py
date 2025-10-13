@@ -1,5 +1,6 @@
 from app.logic.send_message import send_message
 from app.repositories.parqueadero_repository import ParqueaderoRepository
+from app.utils.tiempo_utils import formatear_tiempo_para_usuario
 from typing import List
 
 class WhatsAppMessageService:
@@ -75,9 +76,17 @@ Escribe el número de la opción que deseas:"""
     def mostrar_parqueaderos_disponibles(self, user_id: str, parqueaderos: List):
         """Muestra lista de parqueaderos con cupos disponibles"""
         if parqueaderos:
-            mensaje = "*Parqueaderos con cupos disponibles:*\n"
+            mensaje = "*Parqueaderos con cupos disponibles:*\n\n"
             for p in parqueaderos:
-                mensaje += f"- *{p.name}* \n  Ubicación: {p.ubicacion} \n  Capacidad: {p.capacidad} \n  Ultima actualización: {p.ultima_actualizacion} \n\n"
+                # Mostrar rango si está disponible, sino usar cupos tradicionales
+                info_cupos = p.rango_cupos or f"~{p.cupos_libres} cupos"
+                estado = p.estado_ocupacion or "Cupos disponibles"
+                
+                mensaje += f"🅿️ *{p.name}*\n"
+                mensaje += f"   📍 {p.ubicacion}\n"
+                mensaje += f"   📊 {estado}\n"
+                mensaje += f"   🚗 Disponibilidad: {info_cupos}\n"
+                mensaje += f"   🕐 Actualizado: {formatear_tiempo_para_usuario(p.ultima_actualizacion)}\n\n"
             send_message(user_id, mensaje)
         else:
             send_message(user_id, "No hay parqueaderos con cupos disponibles en este momento.")
@@ -96,14 +105,19 @@ Escribe el número de la opción que deseas:"""
     
     def mostrar_informacion_parqueadero(self, user_id: str, parqueadero):
         """Muestra información detallada de un parqueadero"""
+        # Mostrar rango si está disponible
+        info_cupos = parqueadero.rango_cupos or f"~{parqueadero.cupos_libres}"
+        estado = parqueadero.estado_ocupacion or ("Disponible" if parqueadero.tiene_cupos else "Lleno")
+        
         mensaje = f"""🏢 *Información del Parqueadero*
 
-📍 **Nombre:** {parqueadero.name}
-📌 **Ubicación:** {parqueadero.ubicacion}
-🚗 **Capacidad:** {parqueadero.capacidad}
-🅿️ **Cupos libres:** {parqueadero.cupos_libres}
-✅ **Tiene cupos:** {'Sí' if parqueadero.tiene_cupos else 'No'}
-🕐 **Última actualización:** {parqueadero.ultima_actualizacion or 'N/A'}"""
+📍 *Nombre:* {parqueadero.name}
+📌 *Ubicación:* {parqueadero.ubicacion}
+🚗 *Capacidad:* {parqueadero.capacidad}
+📊 *Estado actual:* {estado}
+🅿️ *Disponibilidad:* {info_cupos}
+✅ *Tiene cupos:* {'Sí' if parqueadero.tiene_cupos else 'No'}
+🕐 *Última actualización:* {formatear_tiempo_para_usuario(parqueadero.ultima_actualizacion)}"""
         send_message(user_id, mensaje)
     
     # ===== MENSAJES DE SUSCRIPCIONES =====
@@ -114,7 +128,7 @@ Escribe el número de la opción que deseas:"""
     
     def confirmar_suscripcion_especifica(self, user_id: str, nombre_parqueadero: str):
         """Confirma suscripción a un parqueadero específico"""
-        send_message(user_id, f"🔔 Te has suscrito a notificaciones del parqueadero: **{nombre_parqueadero}**")
+        send_message(user_id, f"🔔 Te has suscrito a notificaciones del parqueadero: *{nombre_parqueadero}*")
     
     def confirmar_desuscripcion_total(self, user_id: str):
         """Confirma desuscripción de todas las notificaciones"""
@@ -122,7 +136,7 @@ Escribe el número de la opción que deseas:"""
     
     def confirmar_desuscripcion_especifica(self, user_id: str, nombre_parqueadero: str):
         """Confirma desuscripción de un parqueadero específico"""
-        send_message(user_id, f"❌ Te has desuscrito del parqueadero: **{nombre_parqueadero}**")
+        send_message(user_id, f"❌ Te has desuscrito del parqueadero: *{nombre_parqueadero}*")
     
     def mostrar_suscripciones_actuales(self, user_id: str, suscripciones: List):
         """Muestra las suscripciones actuales del conductor"""
@@ -133,7 +147,7 @@ Escribe el número de la opción que deseas:"""
                     mensaje += f"{i}️⃣ 🌐 Todos los parqueaderos\n"
                 else:
                     mensaje += f"{i}️⃣ 🅿️ {suscripcion['parqueadero']}\n"
-                mensaje += f"   📅 Desde: {suscripcion['fecha']}\n\n"
+                mensaje += f"   📅 Desde: {formatear_tiempo_para_usuario(suscripcion['fecha'])}\n\n"
             
             mensaje += "Para desuscribirte, escribe 'desuscribir' seguido del número o 'desuscribir todo'"
         else:
@@ -145,11 +159,16 @@ Escribe el número de la opción que deseas:"""
     
     def crear_notificacion_cupo_liberado(self, parqueadero) -> str:
         """Crea el mensaje de notificación cuando se libera un cupo"""
+        # Usar rango si está disponible, sino usar cupos_libres tradicional
+        info_cupos = parqueadero.rango_cupos or f"~{parqueadero.cupos_libres} cupos"
+        estado = parqueadero.estado_ocupacion or "Cupos disponibles"
+        
         return f"""🚗 ¡CUPO DISPONIBLE! 🅿️
 
-📍 **{parqueadero.name}**
+📍 *{parqueadero.name}*
 📌 Ubicación: {parqueadero.ubicacion}
-🔢 Cupos libres: {parqueadero.cupos_libres}
+📊 Estado: {estado}
+🅿️ Disponibilidad: {info_cupos}
 
 ¡Apúrate antes de que se agote!
 
@@ -192,17 +211,21 @@ Para desuscribirte, escribe "desuscribir" """
     # ===== MENSAJES DE ACTUALIZACIÓN DE CUPOS =====
     
     def solicitar_cupos_actualizacion(self, user_id: str):
-        """Solicita información para actualizar cupos"""
-        mensaje = """📝 *Actualizar Cupos del Parqueadero*
+        """Solicita información para actualizar cupos usando opciones enumeradas"""
+        mensaje = """📝 *Actualizar Estado del Parqueadero*
 
-Por favor, envía la información en el siguiente formato:
-`cupos_libres,tiene_cupos`
+Selecciona la opción que mejor describe la situación actual:
 
-Ejemplo:
-- Si hay 15 cupos libres: `15,true`
-- Si no hay cupos: `0,false`
+🔴 *1* - Parqueadero lleno (0 cupos)
+🟡 *2* - Pocos cupos disponibles (1-5 cupos)  
+🟢 *3* - Algunos cupos disponibles (6-15 cupos)
+🟢 *4* - Muchos cupos disponibles (16-30 cupos)
+🔵 *5* - Parqueadero casi vacío (30+ cupos)
+⬅️ *6* - Volver al menú principal
 
-Envía la información:"""
+💡 *Los conductores recibirán notificación si hay cupos disponibles (opciones 2-5)*
+
+Escribe el número de tu opción:"""
         send_message(user_id, mensaje)
     
     def confirmar_actualizacion_cupos(self, user_id: str, cupos_libres: str, notificaciones_enviadas: int):
@@ -213,9 +236,58 @@ Envía la información:"""
 📢 Notificaciones enviadas: {notificaciones_enviadas}"""
         send_message(user_id, mensaje)
     
+    def confirmar_actualizacion_cupos_con_descripcion(self, user_id: str, descripcion: str, cupos_libres: str, notificaciones_enviadas: int):
+        """Confirma la actualización de cupos con descripción del estado"""
+        mensaje = f"""✅ *Cupos actualizados exitosamente*
+
+📋 *Estado:* {descripcion}
+🅿️ *Cupos aproximados:* {cupos_libres}
+📢 *Notificaciones enviadas:* {notificaciones_enviadas}
+
+{self._obtener_emoji_notificaciones(notificaciones_enviadas)}"""
+        send_message(user_id, mensaje)
+    
+    def _obtener_emoji_notificaciones(self, cantidad: int) -> str:
+        """Obtiene emoji apropiado según cantidad de notificaciones enviadas"""
+        if cantidad == 0:
+            return "ℹ️ No hay conductores suscritos actualmente"
+        elif cantidad == 1:
+            return "👤 Se notificó a 1 conductor"
+        elif cantidad <= 5:
+            return f"👥 Se notificó a {cantidad} conductores"
+        else:
+            return f"🚨 Se notificó a {cantidad} conductores - ¡Alto interés!"
+    
     def error_formato_cupos(self, user_id: str):
         """Error en formato de actualización de cupos"""
-        send_message(user_id, "❌ Formato incorrecto. Usa: cupos_libres,tiene_cupos (ej: 15,true)")
+        send_message(user_id, "❌ Opción inválida. Por favor, selecciona una opción del 1 al 6.")
+    
+    def mostrar_ayuda_cupos(self, user_id: str):
+        """Muestra ayuda detallada sobre las opciones de cupos"""
+        mensaje = """ℹ️ *Guía de Opciones de Cupos*
+
+🔴 *Opción 1 - Parqueadero lleno:*
+   • No hay espacios disponibles
+   • No se envían notificaciones
+
+🟡 *Opción 2 - Pocos cupos:*
+   • Entre 1-5 espacios disponibles
+   • Ideal para ocupación alta
+
+🟢 *Opción 3 - Algunos cupos:*
+   • Entre 6-15 espacios disponibles  
+   • Ocupación media-alta
+
+🟢 *Opción 4 - Muchos cupos:*
+   • Entre 16-30 espacios disponibles
+   • Ocupación media-baja
+
+🔵 *Opción 5 - Casi vacío:*
+   • Más de 30 espacios disponibles
+   • Ocupación muy baja
+
+💡 *Las opciones 2-5 activarán notificaciones automáticas a conductores suscritos*"""
+        send_message(user_id, mensaje)
     
     # ===== MENSAJES DE DESPEDIDA =====
     
@@ -250,3 +322,24 @@ Envía la información:"""
     def mostrar_consultando_parqueaderos(self, user_id: str):
         """Mensaje mientras consulta parqueaderos"""
         send_message(user_id, "🅿️ Consultando parqueaderos disponibles...")
+    
+    # ===== MENSAJES DE CONFIRMACIÓN DE CUPOS =====
+    
+    def solicitar_confirmacion_cupos(self, user_id: str, opcion: int, descripcion: str, rango: str):
+        """Solicita confirmación antes de actualizar los cupos"""
+        mensaje = f"""⚠️ *Confirmar Actualización*
+
+Has seleccionado:
+📋 *{descripcion}*
+🅿️ *Rango:* {rango}
+
+¿Es correcto este estado del parqueadero?
+
+✅ *1* - Sí, confirmar actualización
+❌ *2* - No, volver a seleccionar
+⬅️ *3* - Cancelar y volver al menú"""
+        send_message(user_id, mensaje)
+    
+    def error_confirmacion_cupos(self, user_id: str):
+        """Error en la confirmación de cupos"""
+        send_message(user_id, "❌ Opción inválida. Selecciona 1 (Confirmar), 2 (Volver a seleccionar) o 3 (Cancelar).")
