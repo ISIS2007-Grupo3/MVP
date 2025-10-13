@@ -5,7 +5,7 @@ class ParqueaderoRepository(BaseRepository):
     def __init__(self, db):
           super().__init__(db, "parqueaderos", Parqueadero)
 
-    def find_by_name(self, name: str) -> Parqueadero | None:
+    def find_by_name(self, name: str) -> Parqueadero:
         data = self.collection.find_one({"name": name})
         if data:
             return self.model(**data)

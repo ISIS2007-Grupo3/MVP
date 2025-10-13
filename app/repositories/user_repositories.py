@@ -40,9 +40,13 @@ class GestorParqueaderoRepository(BaseRepository):
         resultado = self.find_by_id(str(result.inserted_id))
         return resultado
 
-    def obtener_parqueadero(self, gestor_id: str):
+    def obtener_parqueadero_id(self, gestor_id: str):
         gestor = self.find_by_id(gestor_id)
-        return gestor.parqueadero if gestor else None
+        return gestor.parqueadero_id if gestor else None
+    def update(self, gestor: GestorParqueadero) -> GestorParqueadero:
+        update_data = gestor.model_dump(by_alias=True)
+        self.collection.update_one({"_id": gestor.id}, {"$set": update_data})
+        return self.find_by_id(gestor.id)
 
 class UserRepository(BaseRepository):
     def __init__(self, db: Database):

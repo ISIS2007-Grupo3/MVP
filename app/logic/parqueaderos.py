@@ -13,8 +13,9 @@ def obtener_parqueadero_gestor(wa_id: str, db):
 
 def actualizar_cupos_parqueadero(wa_id: str, cupos_libres: str, tiene_cupo: bool, db):
     parqueadero = obtener_parqueadero_gestor(wa_id, db)
+    print(parqueadero)
     if parqueadero:
         parqueadero_repo = ParqueaderoRepository(db)
-        parqueadero_repo.actualizar_cupos(parqueadero.id, cupos_libres, tiene_cupo)
+        parqueadero_repo.actualizar_cupos(parqueadero, cupos_libres, tiene_cupo)
         return True
     return False

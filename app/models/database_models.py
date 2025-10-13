@@ -7,6 +7,7 @@ class EstadoChat(BaseModel):
     paso_actual: Optional[str] = None  # Paso actual en el flujo de conversación
 
 class Parqueadero(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()), alias="_id")
     name: str 
     ubicacion: str
     capacidad: int
@@ -30,4 +31,4 @@ class Conductor(User):
 
 
 class GestorParqueadero(User):
-    parqueadero: Parqueadero
+    parqueadero_id: Optional[str] = None  # ID del parqueadero que gestiona

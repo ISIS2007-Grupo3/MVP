@@ -76,7 +76,7 @@ def handle_user_interaction(msg: Message, usuario, db):
     if usuario.rol == "conductor":
         handle_conductor(text, msg.from_, db)
     elif usuario.rol == "gestor_parqueadero":
-        send_message(msg.from_, "Funcionalidad de gestor próximamente.")
+        handle_gestor(text, msg.from_, db)
     else:
         send_message(msg.from_, "Rol no reconocido. Contacta soporte.")
 
