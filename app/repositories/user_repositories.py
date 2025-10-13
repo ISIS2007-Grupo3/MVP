@@ -39,7 +39,11 @@ class GestorParqueaderoRepository(BaseRepository):
         result = self.collection.insert_one(validated_data.model_dump(by_alias=True))
         resultado = self.find_by_id(str(result.inserted_id))
         return resultado
-    
+
+    def obtener_parqueadero(self, gestor_id: str):
+        gestor = self.find_by_id(gestor_id)
+        return gestor.parqueadero if gestor else None
+
 class UserRepository(BaseRepository):
     def __init__(self, db: Database):
         super().__init__(db, "usuarios", User)

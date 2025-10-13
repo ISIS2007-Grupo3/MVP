@@ -11,6 +11,7 @@ class Parqueadero(BaseModel):
     ubicacion: str
     capacidad: int
     tiene_cupos: bool = True
+    cupos_libres: str
     ultima_actualizacion: Optional[str] = None
     class Config:
         allow_population_by_field_name = True

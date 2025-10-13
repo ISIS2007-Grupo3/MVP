@@ -1,7 +1,7 @@
 from app.models.whatsapp_webhook import WebhookPayload
 from app.logic.send_message import send_message
 from app.models.whatsapp_webhook import Message
-from app.logic.parqueaderos import obtener_parqueaderos_con_cupos
+from app.logic.parqueaderos import obtener_parqueaderos_con_cupos, actualizar_cupos_parqueadero
 import app.logic.sesion as sesion
 
 def handle_message(payload: WebhookPayload, db):
@@ -154,6 +154,102 @@ def handle_suscripcion_notificaciones(user_id, db):
     send_message(user_id, "🔔 Funcionalidad de suscripción próximamente.")
     mostrar_menu_conductor(user_id, db)
 
+def handle_gestor(text, user_id, db):
+    """
+    Maneja el flujo específico para gestores de parqueaderos
+    """
+    usuario = sesion.obtener_usuario(user_id, db)
+    current_step = usuario.estado_chat.paso_actual
+    
+    # Mostrar menú si está en estado inicial o si solicita el menú
+    if current_step == "inicial" or text in ["menu", "menú"]:
+        mostrar_menu_gestor(user_id, db)
+        return
+    
+    # Procesar opciones del menú
+    if current_step == "esperando_opcion_menu":
+        handle_gestor_menu_option(text, user_id, db)
+        return
+    
+    if current_step == "esperando_cambio_cupos":
+        handle_cupos_gestor(text, user_id, db)
+        return
+    
+    # Si no está en ningún flujo específico, mostrar menú
+    mostrar_menu_gestor(user_id, db)
+    
+def mostrar_menu_gestor(user_id,db):
+    """
+    Muestra el menu para los gestores de parqueaderos
+    """
+    menu = """🅿️🚘 Menú Gestor de Parqueaderos:
+Selecciona una de las siguientes opciones:
+
+1️⃣ Gestionar cupos libres publicados
+2️⃣ Salir
+
+Escribe el número de la opción que deseas:"""
+    
+    send_message(user_id, menu)
+    sesion.actualizar_estado_chat(user_id, "esperando_opcion_menu", db)
+    
+def handle_gestor_menu_option(text, user_id, db):
+    """
+    Procesa las opciones del menu de gestor
+    """
+    if text == "1":
+        mostrar_menu_cupos_gestor(user_id, db)
+    elif text == "2":
+        handle_salir(user_id, db)
+    else:
+        send_message(user_id, "❌ Opción inválida. Por favor, selecciona 1 o 2.")
+        mostrar_menu_gestor(user_id, db)
+        
+def mostrar_menu_cupos_gestor(user_id, db):
+    """
+    Muestra el menu para actualizar cupos de los gestores de parqueaderos
+    """
+    menu = """🅿️🚘 Gestionar cupos del parqueadero:
+Selecciona una de las siguientes opciones:
+
+1️⃣ No hay cupo
+2️⃣ Hay 1-5 cupos
+3️⃣ Hay más de 5 cupos
+4️⃣ Volver
+
+Escribe el número de la opción que deseas:"""
+    
+    send_message(user_id, menu)
+    sesion.actualizar_estado_chat(user_id, "esperando_cambio_cupos", db)
+    
+def handle_cupos_gestor(text, user_id, db):
+    """
+    Procesa las opciones del menu para actualizar los cupos de un parqueadero
+    """
+    if text not in "1234":
+        send_message(user_id, "❌ Opción inválida. Por favor, selecciona 1, 2, 3 o 4.")
+        mostrar_menu_gestor(user_id, db)
+        return
+    
+    cupos_libres = "No hay cupo"
+    tiene_cupo = False
+    
+    if text == "2":
+        cupos_libres = "Hay 1-5 cupos"
+        tiene_cupo = True
+    elif text == "3":
+        cupos_libres = "Hay más de 5 cupos"
+        tiene_cupo = True
+    if text != "4":
+        exito = actualizar_cupos_parqueadero(user_id, cupos_libres, tiene_cupo, db)
+        
+        if exito:
+            send_message(user_id, "Se actualizaron los cupos del parqueadero 😀")
+        else:
+            send_message(user_id, "Ocurrió un error, inténtalo de nuevo")
+            
+    mostrar_menu_gestor(user_id, db)
+        
 def handle_salir(user_id, db):
     """
     Maneja la salida del usuario

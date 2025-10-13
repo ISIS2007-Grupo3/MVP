@@ -24,3 +24,11 @@ class ParqueaderoRepository(BaseRepository):
             parqueaderos.append(Parqueadero(**doc))
         return parqueaderos
     
+    def actualizar_cupos(self, parking_id: str, cupos_libres: str, tiene_cupos: bool) -> Parqueadero:
+        update_data = {
+            "cupos_libres": cupos_libres,
+            "tiene_cupos": tiene_cupos,
+            "ultima_actualizacion": time.strftime("%Y-%m-%d %H:%M:%S")
+        }
+        self.collection.update_one({"_id": parking_id}, {"$set": update_data})
+        return self.find_by_id(parking_id)
