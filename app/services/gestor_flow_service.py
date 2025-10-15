@@ -74,13 +74,13 @@ class GestorFlowService:
         """Maneja la confirmación de la actualización de cupos"""
         result = self.cupos_service.procesar_confirmacion_cupos(text, user_id)
         
+        # El servicio de cupos ahora maneja mostrar el menú después de actualizar/cancelar
+        # No se necesita hacer nada adicional aquí
         action = result.get("action")
-        if action == "actualizar" or action == "cancelar":
-            self.mostrar_menu_gestor(user_id)
-        elif action == "error":
+        if action == "error":
             # El servicio ya mostró el error y volvió a preguntar
             pass
-        # Si action == "reseleccionar", el flujo continúa en el servicio
+        # Para "actualizar", "cancelar" y "reseleccionar", el servicio maneja el flujo
     
     # ===== SALIDA =====
     

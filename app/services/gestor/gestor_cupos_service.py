@@ -133,6 +133,8 @@ class GestorCuposService:
     def _cancelar_actualizacion(self, user_id: str):
         """Cancela la actualización y vuelve al menú principal"""
         sesion.actualizar_contexto_temporal(user_id, {}, self.db)
+        sesion.actualizar_estado_chat(user_id, "esperando_opcion_menu_gestor", self.db)
+        self.mensaje_menu_service.mostrar_menu_gestor(user_id)
     
     def _error_confirmacion_y_repreguntar(self, user_id: str):
         """Muestra error de confirmación y vuelve a preguntar"""
@@ -194,8 +196,12 @@ class GestorCuposService:
                 result["notificaciones_enviadas"]
             )
             
-            # Limpiar contexto
+            # Limpiar contexto y volver al menú principal
             sesion.actualizar_contexto_temporal(user_id, {}, self.db)
+            sesion.actualizar_estado_chat(user_id, "esperando_opcion_menu_gestor", self.db)
+            
+            # Mostrar menú principal del gestor
+            self.mensaje_menu_service.mostrar_menu_gestor(user_id)
             
             return {
                 "success": True, 
