@@ -28,9 +28,9 @@ class GestorParqueaderoService:
             dict con: {"success": bool, "parqueadero_id": str}
         """
         try:
-            gestor = self.gestor_repo.find_by_whatsapp_id(user_id)
+            gestor = self.gestor_repo.find_by_id(user_id)
             if not gestor:
-                self.mensaje_error_service.error_suscripcion_general(user_id, "No estás registrado como gestor")
+                self.mensaje_error_service.error_general(user_id, "No estás registrado como gestor")
                 return {"success": False}
             
             parqueadero = self.parqueadero_repo.find_by_id(gestor.parqueadero_id)
@@ -44,5 +44,5 @@ class GestorParqueaderoService:
             print(f"Error al ver información del parqueadero: {e}")
             import traceback
             traceback.print_exc()
-            self.mensaje_error_service.error_suscripcion_general(user_id, "Error al consultar información")
+            self.mensaje_error_service.error_general(user_id, "Error al consultar información")
             return {"success": False}

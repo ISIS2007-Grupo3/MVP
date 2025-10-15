@@ -55,9 +55,6 @@ Escribe el número de tu opción para confirmar:
 
 📋 *Estado:* {descripcion}
 🅿️ *Cupos aproximados:* {cupos_libres}
-📢 *Notificaciones enviadas:* {notificaciones_enviadas}
-
-{self._obtener_emoji_notificaciones(notificaciones_enviadas)}
 """
         send_message(user_id, mensaje)
     

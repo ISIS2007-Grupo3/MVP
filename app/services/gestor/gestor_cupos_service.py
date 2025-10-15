@@ -76,7 +76,7 @@ class GestorCuposService:
             return {"action": "error", "success": False}
         except Exception as e:
             print(f"Error en actualización de cupos: {e}")
-            self.mensaje_error_service.error_suscripcion_general(user_id, "Error al actualizar cupos")
+            self.mensaje_error_service.error_general(user_id, "Error al actualizar cupos")
             return {"action": "error", "success": False}
     
     def _solicitar_confirmacion_con_contexto(self, user_id: str, opcion: int, cupos_libres: str, 
@@ -121,7 +121,7 @@ class GestorCuposService:
                 
         except Exception as e:
             print(f"Error en confirmación de cupos: {e}")
-            self.mensaje_error_service.error_suscripcion_general(user_id, "Error en confirmación")
+            self.mensaje_error_service.error_general(user_id, "Error en confirmación")
             return {"action": "error", "success": False}
     
     def _reseleccionar_cupos(self, user_id: str):
@@ -204,5 +204,5 @@ class GestorCuposService:
             
         except Exception as e:
             print(f"Error ejecutando actualización: {e}")
-            self.mensaje_error_service.error_suscripcion_general(user_id, "Error al actualizar cupos")
+            self.mensaje_error_service.error_general(user_id, "Error al actualizar cupos")
             return {"success": False, "notificaciones_enviadas": 0}

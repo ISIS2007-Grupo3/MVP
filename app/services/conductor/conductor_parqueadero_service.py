@@ -107,5 +107,5 @@ class ConductorParqueaderoService:
             print(f"Error en selección de parqueadero: {e}")
             import traceback
             traceback.print_exc()
-            self.mensaje_error_service.error_suscripcion_general(user_id, "Error al consultar parqueadero")
+            self.mensaje_error_service.error_general(user_id, "Error al consultar parqueadero")
             return {"action": "error", "success": False}

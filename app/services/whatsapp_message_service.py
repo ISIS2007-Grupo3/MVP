@@ -164,7 +164,7 @@ class WhatsAppMessageService:
     
     def error_suscripcion_general(self, user_id: str, mensaje_error: str):
         """Error general en suscripciones"""
-        self.error_service.error_suscripcion_general(user_id, mensaje_error)
+        self.error_service.error_general(user_id, mensaje_error)
     
     def error_rol_no_reconocido(self, user_id: str):
         """Error cuando el rol del usuario no es reconocido"""

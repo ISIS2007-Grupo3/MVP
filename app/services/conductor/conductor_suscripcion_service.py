@@ -56,14 +56,14 @@ class ConductorSuscripcionService:
         """Suscribe al conductor a todos los parqueaderos"""
         result = self.notification_service.suscribir_conductor(user_id, None)
         if not result["success"]:
-            self.mensaje_error_service.error_suscripcion_general(user_id, result["message"])
+            self.mensaje_error_service.error_general(user_id, result["message"])
         return result
     
     def desuscribir_todos(self, user_id: str) -> dict:
         """Desuscribe al conductor de todos los parqueaderos"""
         result = self.notification_service.desuscribir_conductor(user_id, None)
         if not result["success"]:
-            self.mensaje_error_service.error_suscripcion_general(user_id, result["message"])
+            self.mensaje_error_service.error_general(user_id, result["message"])
         return result
     
     def mostrar_parqueaderos_para_suscripcion(self, user_id: str):
@@ -84,7 +84,7 @@ class ConductorSuscripcionService:
                 self.mensaje_parqueadero_service.mostrar_parqueaderos_para_suscripcion(user_id, [])
         except Exception as e:
             print(f"Error en mostrar_parqueaderos_para_suscripcion: {e}")
-            self.mensaje_error_service.error_suscripcion_general(user_id, "Error al cargar parqueaderos")
+            self.mensaje_error_service.error_general(user_id, "Error al cargar parqueaderos")
     
     def seleccionar_parqueadero_suscripcion(self, text: str, user_id: str) -> dict:
         """
@@ -110,7 +110,7 @@ class ConductorSuscripcionService:
                     result = self.notification_service.suscribir_conductor(user_id, parqueadero_id)
                     
                     if not result["success"]:
-                        self.mensaje_error_service.error_suscripcion_general(user_id, result["message"])
+                        self.mensaje_error_service.error_general(user_id, result["message"])
                     else:
                         # Limpiar contexto temporal después de suscripción exitosa
                         sesion.actualizar_contexto_temporal(user_id, {}, self.db)
@@ -128,7 +128,7 @@ class ConductorSuscripcionService:
             print(f"Error en selección de parqueadero: {e}")
             import traceback
             traceback.print_exc()
-            self.mensaje_error_service.error_suscripcion_general(user_id, "Error interno del sistema")
+            self.mensaje_error_service.error_general(user_id, "Error interno del sistema")
             return {"action": "error", "success": False}
     
     def mostrar_suscripciones_actuales(self, user_id: str) -> dict:
@@ -177,7 +177,7 @@ class ConductorSuscripcionService:
                 if result["success"]:
                     self.mensaje_suscripcion_service.confirmar_desuscripcion_total(user_id)
                 else:
-                    self.mensaje_error_service.error_suscripcion_general(user_id, result["message"])
+                    self.mensaje_error_service.error_general(user_id, result["message"])
                 return {"action": "desuscribir_todo", "success": result["success"]}
             
             # Manejar desuscripción individual
@@ -194,7 +194,7 @@ class ConductorSuscripcionService:
                             if result["success"]:
                                 self.mensaje_suscripcion_service.confirmar_desuscripcion_total(user_id)
                             else:
-                                self.mensaje_error_service.error_suscripcion_general(user_id, result["message"])
+                                self.mensaje_error_service.error_general(user_id, result["message"])
                         else:
                             # Desuscribir de parqueadero específico
                             parqueadero_id = suscripcion.get("parqueadero_id")
@@ -203,9 +203,9 @@ class ConductorSuscripcionService:
                                 if result["success"]:
                                     self.mensaje_suscripcion_service.confirmar_desuscripcion_parqueadero(user_id, suscripcion['parqueadero'])
                                 else:
-                                    self.mensaje_error_service.error_suscripcion_general(user_id, result["message"])
+                                    self.mensaje_error_service.error_general(user_id, result["message"])
                             else:
-                                self.mensaje_error_service.error_suscripcion_general(user_id, "No se pudo identificar el parqueadero")
+                                self.mensaje_error_service.error_general(user_id, "No se pudo identificar el parqueadero")
                                 return {"action": "error", "success": False}
                         
                         return {"action": "desuscribir_individual", "success": True}
@@ -226,7 +226,7 @@ class ConductorSuscripcionService:
             print(f"Error en gestión de suscripciones: {e}")
             import traceback
             traceback.print_exc()
-            self.mensaje_error_service.error_suscripcion_general(user_id, "Error al procesar la solicitud")
+            self.mensaje_error_service.error_general(user_id, "Error al procesar la solicitud")
             return {"action": "error", "success": False}
     
     def procesar_comando_desuscripcion(self, text: str, user_id: str) -> dict:

@@ -155,11 +155,6 @@ class WhatsAppInteractiveService:
                     "description": "Consulta parqueaderos con cupos disponibles"
                 },
                 {
-                    "id": "suscripciones",
-                    "title": "🔔 Notificaciones",
-                    "description": "Gestiona tus suscripciones de alertas"
-                },
-                {
                     "id": "salir",
                     "title": "👋 Salir",
                     "description": "Cerrar sesión del sistema"
@@ -206,103 +201,103 @@ class WhatsAppInteractiveService:
         )
         return self.send_interactive_message(user_id, interactive_data)
     
-    def send_subscription_menu(self, user_id: str) -> bool:
-        """Envía menú de opciones de suscripción"""
-        sections = [{
-            "title": "Opciones de Suscripción",
-            "rows": [
-                {
-                    "id": "suscribir_todos",
-                    "title": "🌐 Todos",
-                    "description": "Recibe notificaciones de todos los parqueaderos."
-                },
-                {
-                    "id": "suscribir_especifico",
-                    "title": "🅿️ Específico",
-                    "description": "Elige un parqueadero particular para recibir notificaciones."
-                },
-                {
-                    "id": "ver_suscripciones",
-                    "title": "📋 Mis suscripciones",
-                    "description": "Revisa tus suscripciones actuales."
-                },
-                {
-                    "id": "desuscribir_todos",
-                    "title": "❌ Desuscribirme",
-                    "description": "Cancelar una o todas mis suscripciones."
-                },
-                {
-                    "id": "volver_menu",
-                    "title": "⬅️ Volver",
-                    "description": "Regresar al menú principal."
-                }
-            ]
-        }]
+    # def send_subscription_menu(self, user_id: str) -> bool:
+    #     """Envía menú de opciones de suscripción"""
+    #     sections = [{
+    #         "title": "Opciones de Suscripción",
+    #         "rows": [
+    #             {
+    #                 "id": "suscribir_todos",
+    #                 "title": "🌐 Todos",
+    #                 "description": "Recibe notificaciones de todos los parqueaderos."
+    #             },
+    #             {
+    #                 "id": "suscribir_especifico",
+    #                 "title": "🅿️ Específico",
+    #                 "description": "Elige un parqueadero particular para recibir notificaciones."
+    #             },
+    #             {
+    #                 "id": "ver_suscripciones",
+    #                 "title": "📋 Mis suscripciones",
+    #                 "description": "Revisa tus suscripciones actuales."
+    #             },
+    #             {
+    #                 "id": "desuscribir_todos",
+    #                 "title": "❌ Desuscribirme",
+    #                 "description": "Cancelar una o todas mis suscripciones."
+    #             },
+    #             {
+    #                 "id": "volver_menu",
+    #                 "title": "⬅️ Volver",
+    #                 "description": "Regresar al menú principal."
+    #             }
+    #         ]
+    #     }]
         
-        interactive_data = self.create_list_message(
-            header_text="🔔 Notificaciones",
-            body_text="Gestiona tus suscripciones de notificaciones:",
-            button_text="📝 Ver opciones",
-            sections=sections
-        )
-        return self.send_interactive_message(user_id, interactive_data)
+    #     interactive_data = self.create_list_message(
+    #         header_text="🔔 Notificaciones",
+    #         body_text="Gestiona tus suscripciones de notificaciones:",
+    #         button_text="📝 Ver opciones",
+    #         sections=sections
+    #     )
+    #     return self.send_interactive_message(user_id, interactive_data)
     
-    def send_subscriptions_list_with_unsubscribe(self, user_id: str, suscripciones: List[Any]) -> bool:
-        """Envía lista interactiva de suscripciones con opciones de desuscripción"""
-        print(f"🔍 send_subscriptions_list_with_unsubscribe llamado con {len(suscripciones) if suscripciones else 0} suscripciones")
-        if not suscripciones:
-            print("❌ No hay suscripciones, retornando False")
-            return False
+    # def send_subscriptions_list_with_unsubscribe(self, user_id: str, suscripciones: List[Any]) -> bool:
+    #     """Envía lista interactiva de suscripciones con opciones de desuscripción"""
+    #     print(f"🔍 send_subscriptions_list_with_unsubscribe llamado con {len(suscripciones) if suscripciones else 0} suscripciones")
+    #     if not suscripciones:
+    #         print("❌ No hay suscripciones, retornando False")
+    #         return False
         
-        rows = []
+    #     rows = []
         
-        # Primera opción: Desuscribirse de todo
-        rows.append({
-            "id": "desuscribir_todo",
-            "title": "❌ Desuscribir todo",
-            "description": "Cancelar todas mis suscripciones"
-        })
+    #     # Primera opción: Desuscribirse de todo
+    #     rows.append({
+    #         "id": "desuscribir_todo",
+    #         "title": "❌ Desuscribir todo",
+    #         "description": "Cancelar todas mis suscripciones"
+    #     })
         
-        # Agregar cada suscripción individual
-        for i, suscripcion in enumerate(suscripciones):
-            if suscripcion["tipo"] == "global":
-                rows.append({
-                    "id": f"desuscribir_{i}",
-                    "title": "🌐 Todos",
-                    "description": f"Desde {self._formato_fecha_corto(suscripcion['fecha'])}"
-                })
-            else:
-                # Truncar nombre del parqueadero si es muy largo
-                nombre = suscripcion['parqueadero']
-                nombre_truncado = nombre[:17] + "..." if len(nombre) > 17 else nombre
-                rows.append({
-                    "id": f"desuscribir_{i}",
-                    "title": f"🅿️ {nombre_truncado}",
-                    "description": f"Desde {self._formato_fecha_corto(suscripcion['fecha'])}"
-                })
+    #     # Agregar cada suscripción individual
+    #     for i, suscripcion in enumerate(suscripciones):
+    #         if suscripcion["tipo"] == "global":
+    #             rows.append({
+    #                 "id": f"desuscribir_{i}",
+    #                 "title": "🌐 Todos",
+    #                 "description": f"Desde {self._formato_fecha_corto(suscripcion['fecha'])}"
+    #             })
+    #         else:
+    #             # Truncar nombre del parqueadero si es muy largo
+    #             nombre = suscripcion['parqueadero']
+    #             nombre_truncado = nombre[:17] + "..." if len(nombre) > 17 else nombre
+    #             rows.append({
+    #                 "id": f"desuscribir_{i}",
+    #                 "title": f"🅿️ {nombre_truncado}",
+    #                 "description": f"Desde {self._formato_fecha_corto(suscripcion['fecha'])}"
+    #             })
         
-        # Agregar opción para volver
-        rows.append({
-            "id": "volver_suscripciones",
-            "title": "⬅️ Volver",
-            "description": "Regresar al menú de notificaciones"
-        })
+    #     # Agregar opción para volver
+    #     rows.append({
+    #         "id": "volver_suscripciones",
+    #         "title": "⬅️ Volver",
+    #         "description": "Regresar al menú de notificaciones"
+    #     })
         
-        sections = [{
-            "title": "Mis Suscripciones",
-            "rows": rows
-        }]
+    #     sections = [{
+    #         "title": "Mis Suscripciones",
+    #         "rows": rows
+    #     }]
         
-        print(f"📋 Creando mensaje interactivo con {len(rows)} opciones")
-        interactive_data = self.create_list_message(
-            header_text="📋 Tus Suscripciones",
-            body_text="Selecciona una opción para desuscribirte:",
-            button_text="📝 Ver opciones",
-            sections=sections
-        )
-        result = self.send_interactive_message(user_id, interactive_data)
-        print(f"✅ Resultado del envío: {result}")
-        return result
+    #     print(f"📋 Creando mensaje interactivo con {len(rows)} opciones")
+    #     interactive_data = self.create_list_message(
+    #         header_text="📋 Tus Suscripciones",
+    #         body_text="Selecciona una opción para desuscribirte:",
+    #         button_text="📝 Ver opciones",
+    #         sections=sections
+    #     )
+    #     result = self.send_interactive_message(user_id, interactive_data)
+    #     print(f"✅ Resultado del envío: {result}")
+    #     return result
     
     def _formato_fecha_corto(self, fecha_str: str) -> str:
         """Convierte fecha a formato corto para descripciones"""

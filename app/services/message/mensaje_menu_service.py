@@ -27,37 +27,34 @@ Bienvenido al sistema de parqueaderos. Escribe el número de tu opción:
 1️⃣ Ver Parqueaderos
    📍 Consulta parqueaderos con cupos disponibles
 
-2️⃣ Notificaciones  
-   🔔 Gestiona tus suscripciones de alertas
-
-3️⃣ Salir
+2️⃣ Salir
    👋 Cerrar sesión del sistema"""
             send_message(user_id, menu)
     
-    def mostrar_menu_suscripciones(self, user_id: str):
-        """Muestra el menú de opciones de suscripción usando mensajes interactivos"""
-        success = self.interactive_service.send_subscription_menu(user_id)
-        if not success:
-            # Fallback al mensaje de texto tradicional
-            menu = """🔔 *Notificaciones de Parqueaderos*
+#     def mostrar_menu_suscripciones(self, user_id: str):
+#         """Muestra el menú de opciones de suscripción usando mensajes interactivos"""
+#         success = self.interactive_service.send_subscription_menu(user_id)
+#         if not success:
+#             # Fallback al mensaje de texto tradicional
+#             menu = """🔔 *Notificaciones de Parqueaderos*
 
-Gestiona tus suscripciones de notificaciones. Escribe el número de tu opción:
+# Gestiona tus suscripciones de notificaciones. Escribe el número de tu opción:
 
-1️⃣ Todos los parqueaderos
-   🌐 Recibe notificaciones de todos
+# 1️⃣ Todos los parqueaderos
+#    🌐 Recibe notificaciones de todos
 
-2️⃣ Parqueadero específico
-   🅿️ Elige un parqueadero particular
+# 2️⃣ Parqueadero específico
+#    🅿️ Elige un parqueadero particular
 
-3️⃣ Ver mis suscripciones
-   📋 Revisa tus suscripciones actuales
+# 3️⃣ Ver mis suscripciones
+#    📋 Revisa tus suscripciones actuales
 
-4️⃣ Desuscribir todo
-   ❌ Cancelar todas las notificaciones
+# 4️⃣ Desuscribir todo
+#    ❌ Cancelar todas las notificaciones
 
-5️⃣ Volver al menú
-   ⬅️ Regresar al menú principal"""
-            send_message(user_id, menu)
+# 5️⃣ Volver al menú
+#    ⬅️ Regresar al menú principal"""
+#             send_message(user_id, menu)
     
     def mostrar_menu_gestor(self, user_id: str):
         """Muestra el menú principal para gestores usando mensajes interactivos"""
