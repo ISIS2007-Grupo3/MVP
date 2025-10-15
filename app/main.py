@@ -1,6 +1,8 @@
 import os
+from pathlib import Path
 from fastapi import Depends, FastAPI, Request, HTTPException
-from fastapi.responses import Response
+from fastapi.responses import Response, HTMLResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from app.routers import webhook_router
 from app.database.db_conn import get_db
 from app.models.database_models import Parqueadero, User, GestorParqueadero, Suscripcion
@@ -10,13 +12,90 @@ from app.repositories.suscripcion_repository import SuscripcionRepository
 from app.services.notification_service import NotificationService
 from app.services.whatsapp_interactive_service import WhatsAppInteractiveService
 
-app = FastAPI()
+app = FastAPI(
+    title="Sistema de Parqueaderos API",
+    description="API para gestión de parqueaderos y notificaciones vía WhatsApp",
+    version="1.0.0"
+)
+
+# Montar archivos estáticos
+static_path = Path(__file__).parent / "static"
+if static_path.exists():
+    app.mount("/static", StaticFiles(directory=str(static_path)), name="static")
 
 app.include_router(webhook_router.router)
 
 @app.get("/")
 async def read_root():
-    return {"Hello": "World"}
+    """
+    Endpoint raíz de la API
+    """
+    return {
+        "message": "Sistema de Parqueaderos API",
+        "version": "1.0.0",
+        "status": "active",
+        "endpoints": {
+            "health": "/health",
+            "privacy_policy": "/privacy-policy",
+            "terms_of_service": "/terms-of-service",
+            "docs": "/docs",
+            "webhook": "/webhook"
+        }
+    }
+
+@app.get("/health")
+async def health_check():
+    """
+    Health check endpoint para verificar el estado del servicio
+    """
+    instance_id = os.getenv("INSTANCE_ID", "unknown")
+    return {
+        "status": "healthy",
+        "instance": instance_id,
+        "service": "fastapi"
+    }
+
+@app.get("/privacy-policy", response_class=HTMLResponse)
+async def privacy_policy():
+    """
+    Retorna la política de privacidad del sistema
+    
+    Este endpoint sirve la política de privacidad en formato HTML,
+    detallando cómo se recopila, usa y protege la información del usuario.
+    """
+    privacy_file = Path(__file__).parent / "static" / "privacy-policy.html"
+    
+    if not privacy_file.exists():
+        raise HTTPException(
+            status_code=404,
+            detail="Archivo de política de privacidad no encontrado"
+        )
+    
+    with open(privacy_file, "r", encoding="utf-8") as f:
+        content = f.read()
+    
+    return HTMLResponse(content=content, status_code=200)
+
+@app.get("/terms-of-service", response_class=HTMLResponse)
+async def terms_of_service():
+    """
+    Retorna los términos y condiciones de servicio
+    
+    Este endpoint sirve los términos de servicio en formato HTML,
+    estableciendo las reglas, obligaciones y limitaciones del uso del sistema.
+    """
+    terms_file = Path(__file__).parent / "static" / "terms-of-service.html"
+    
+    if not terms_file.exists():
+        raise HTTPException(
+            status_code=404,
+            detail="Archivo de términos de servicio no encontrado"
+        )
+    
+    with open(terms_file, "r", encoding="utf-8") as f:
+        content = f.read()
+    
+    return HTMLResponse(content=content, status_code=200)
 
 # @app.get("/get-db")
 # async def get_db_info(db = Depends(get_db)):
